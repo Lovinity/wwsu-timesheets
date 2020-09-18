@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<script>
+			if (typeof module === "object") {
+				window.module = module;
+				module = undefined;
+			}
+		</script>
+		<meta charset="UTF-8" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta http-equiv="x-ua-compatible" content="ie=edge" />
+
+		<!-- Font Awesome Icons -->
+		<link
+			rel="stylesheet"
+			href="assets/plugins/fontawesome-free/css/all.min.css"
+		/>
+		<!-- Theme style -->
+		<link
+			rel="stylesheet"
+			href="assets/plugins/adminlte/css/adminlte.min.css"
+		/>
+		<!-- overlayScrollbars -->
+		<link
+			rel="stylesheet"
+			href="assets/plugins/overlayScrollbars/css/OverlayScrollbars.min.css"
+		/>
+
+		<!-- jQuery -->
+		<script src="assets/plugins/jquery/jquery.min.js"></script>
+		<!-- JQuery BlockUI -->
+		<script src="assets/plugins/jquery-blockui/js/jquery.blockUI.js"></script>
+		<!-- JQuery multipleselect -->
+		<link
+			rel="stylesheet"
+			href="assets/plugins/jquery-multipleselect/css/multiple-select.min.css"
+		/>
+		<script src="assets/plugins/jquery-multipleselect/js/multiple-select.min.js"></script>
+		<!-- JQuery overlayScrollbars -->
+		<script src="assets/plugins/overlayScrollbars/js/jquery.overlayScrollbars.min.js"></script>
+		<!-- JQuery Mousewheel -->
+		<script src="assets/plugins/jquery-mousewheel/jquery.mousewheel.js"></script>
+
+		<!-- Bootstrap -->
+		<script src="assets/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+		<!-- AdminLTE -->
+		<script src="assets/plugins/adminlte/js/adminlte.js"></script>
+
+		<!-- lodash -->
+		<script src="assets/plugins/lodash/js/lodash.min.js"></script>
+		<!-- Taffy -->
+		<script src="assets/plugins/taffy/js/taffy-min.js"></script>
+		<!-- Moment -->
+		<script src="assets/plugins/moment/moment.min.js"></script>
+		<!-- Moment timezone -->
+		<script src="assets/plugins/moment-timezone/js/moment-timezone-with-data.js"></script>
+		<!-- Moment Duration Format -->
+		<script src="assets/plugins/moment-duration-format/js/moment-duration-format.js"></script>
+		<!-- Moment Recur -->
+		<script src="assets/plugins/moment-recur-ts/js/moment-recur-ts.js"></script>
+		<!-- Jdenticon -->
+		<script src="assets/plugins/jdenticon/js/jdenticon.min.js"></script>
+		<!-- Howler -->
+		<script src="assets/plugins/howler/js/howler.min.js"></script>
+
+		<!-- Chart.js -->
+		<script src="assets/plugins/chart.js/Chart.bundle.min.js"></script>
+		<link rel="stylesheet" href="assets/plugins/chart.js/Chart.min.css" />
+
+		<!-- TinyMCE -->
+		<script src="assets/plugins/tinymce/js/tinymce.min.js"></script>
+
+		<!-- Bootstrap Tempus Dominus (datetimepicker) -->
+		<link
+			rel="stylesheet"
+			href="assets/plugins/bootstrap-tempusdominus/css/tempusdominus-bootstrap-4.min.css"
+		/>
+		<script src="assets/plugins/bootstrap-tempusdominus/js/tempusdominus-bootstrap-4.min.js"></script>
+
+		<!-- Handlebars -->
+		<script src="assets/plugins/handlebars/js/handlebars.min.js"></script>
+		<!-- Alpaca (custom build) -->
+		<script src="assets/plugins/alpaca-wwsu/alpaca.js"></script>
+		<link rel="stylesheet" href="assets/plugins/alpaca-wwsu/alpaca.min.css" />
+
+		<!-- Datatables -->
+		<script src="assets/plugins/datatables/jquery.dataTables.min.js"></script>
+		<script src="assets/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+		<link
+			rel="stylesheet"
+			href="assets/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css"
+		/>
+
+		<!-- Datatables Responsive -->
+		<script src="assets/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
+		<script src="assets/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
+		<link
+			rel="stylesheet"
+			href="assets/plugins/datatables-responsive/css/responsive.bootstrap4.min.css"
+		/>
+
+		<!--izi-->
+		<link
+			rel="stylesheet"
+			href="assets/plugins/iziModal/css/iziModal.min.css"
+		/>
+		<link
+			rel="stylesheet"
+			href="assets/plugins/iziToast/css/iziToast.min.css"
+		/>
+		<script src="assets/plugins/iziModal/js/iziModal.min.js"></script>
+		<script src="assets/plugins/iziToast/js/iziToast.min.js"></script>
+
+		<!--FullCalendar-->
+		<script src="assets/plugins/fullcalendar/main.min.js"></script>
+		<script src="assets/plugins/fullcalendar-bootstrap/main.min.js"></script>
+		<script src="assets/plugins/fullcalendar-daygrid/main.min.js"></script>
+		<script src="assets/plugins/fullcalendar-timegrid/main.min.js"></script>
+		<script src="assets/plugins/fullcalendar-interaction/main.min.js"></script>
+		<script src="assets/plugins/fullcalendar-list/main.min.js"></script>
+		<link rel="stylesheet" href="assets/plugins/fullcalendar/main.min.css" />
+		<link
+			rel="stylesheet"
+			href="assets/plugins/fullcalendar-bootstrap/main.min.css"
+		/>
+		<link
+			rel="stylesheet"
+			href="assets/plugins/fullcalendar-daygrid/main.min.css"
+		/>
+		<link
+			rel="stylesheet"
+			href="assets/plugins/fullcalendar-timegrid/main.min.css"
+		/>
+		<link
+			rel="stylesheet"
+			href="assets/plugins/fullcalendar-list/main.min.css"
+		/>
+
+		<!--WWSU-->
+		<script
+			src="assets/plugins/sails.io/sails.io.js"
+			autoConnect="false"
+			environment="production"
+			reconnection="true"
+		></script>
+		<script src="assets/plugins/wwsu-sails/js/wwsu.js"></script>
+		<script src="assets/plugins/wwsu-api/js/wwsu-api.js"></script>
+		<script src="assets/plugins/wwsu-navigation/js/wwsu-navigation.js"></script>
+		<script src="assets/plugins/wwsu-directors/js/wwsu-directors.js"></script>
+		<script src="assets/plugins/wwsu-djs/js/wwsu-djs.js"></script>
+		<script src="assets/plugins/wwsu-timesheet/js/wwsu-timesheet.js"></script>
+		<script src="assets/plugins/wwsu-calendar/js/wwsu-calendar-web.js"></script>
+		<script src="assets/plugins/wwsu-calendar/js/wwsu-calendar-class.js"></script>
+		<script src="assets/plugins/wwsu-meta/js/wwsu-meta.js"></script>
+		<script src="assets/plugins/wwsu-status/js/wwsu-status.js"></script>
+		<script src="assets/plugins/wwsu-eas/js/wwsu-eas.js"></script>
+		<script src="assets/plugins/wwsu-subscriptions/js/wwsu-subscriptions.js"></script>
+		<script src="assets/plugins/wwsu-likedtracks/js/wwsu-likedtracks.js"></script>
+		<script src="assets/plugins/wwsu-announcements/js/wwsu-announcements.js"></script>
+		<script src="assets/plugins/wwsu-logs/js/wwsu-logs.js"></script>
+		<script src="assets/plugins/wwsu-requests/js/wwsu-requests.js"></script>
+		<script src="assets/plugins/wwsu-state/js/wwsu-state.js"></script>
+		<script src="assets/plugins/wwsu-hosts/js/wwsu-hosts.js"></script>
+		<script src="assets/plugins/wwsu-recipients/js/wwsu-recipients.js"></script>
+		<script src="assets/plugins/wwsu-discipline/js/wwsu-discipline.js"></script>
+		<script src="assets/plugins/wwsu-messages/js/wwsu-messages.js"></script>
+		<script src="assets/plugins/wwsu-climacell/js/wwsu-climacell.js"></script>
+		<script src="assets/plugins/wwsu-version/js/wwsu-version.js"></script>
+	</head>
+
+	<body class="hold-transition sidebar-mini">
+		<!-- Connection problems screen -->
+		<div
+			class="wrapper bg-black text-danger d-none"
+			id="unauthorized"
+			style="text-align: center; height: 100vh; width: 100vw;"
+		>
+			<i
+				class="text-danger fas fa-skull-crossbones"
+				style="font-size: 33vw;"
+			></i>
+			<h1>Connection Problems</h1>
+			<h3>
+				WWSU Timesheets was unable to connect to WWSU. Check your internet
+				connection, and make sure your computer is allowed to connect to WWSU.
+				Contact a director for further assistance (provide the Host ID when you
+				do).
+			</h3>
+			<h4>Host ID: <span class="connecting-id">(loading...)</span></h4>
+		</div>
+
+		<!-- Already Connected screen -->
+		<div
+			class="wrapper bg-black text-danger d-none"
+			id="already-connected"
+			style="text-align: center; height: 100vh; width: 100vw;"
+		>
+			<i
+				class="text-warning fas fa-skull-crossbones"
+				style="font-size: 33vw;"
+			></i>
+			<h1>Another WWSU Timesheets is Running!</h1>
+			<h3>
+				Another WWSU Timesheets is already running and connected to WWSU from
+				this computer. Please close it and wait 1 minute before closing and
+				re-opening this instance.
+			</h3>
+			<h4>Host ID: <span class="connecting-id">(loading...)</span></h4>
+		</div>
+
+		<!-- Connecting screen -->
+		<div
+			class="wrapper bg-black text-danger d-none"
+			id="connecting"
+			style="text-align: center; height: 100vh; width: 100vw;"
+		>
+			<div
+				class="spinner-border text-primary"
+				role="status"
+				style="font-size: 33vw;"
+			>
+				<span class="sr-only">Loading...</span>
+			</div>
+			<h1>Connecting to WWSU...</h1>
+			<h3>
+				Please allow up to 30 seconds while WWSU Timesheets connects to WWSU.
+			</h3>
+			<h4>Host ID: <span class="connecting-id">(loading...)</span></h4>
+		</div>
+
+		<!-- Loading screen -->
+		<div
+			class="wrapper bg-black text-danger"
+			id="loading"
+			style="text-align: center; height: 100vh; width: 100vw;"
+		>
+			<div
+				class="spinner-border text-info"
+				role="status"
+				style="font-size: 33vw;"
+			>
+				<span class="sr-only">Loading...</span>
+			</div>
+			<h1>Loading WWSU Timesheets...</h1>
+			<h3>Please wait while WWSU Timesheets loads.</h3>
+			<h4>Host ID: <span class="connecting-id">(loading...)</span></h4>
+		</div>
+
+		<!-- Reconnecting screen -->
+		<div
+			class="wrapper bg-black text-danger d-none"
+			id="reconnecting"
+			style="text-align: center; height: 100vh; width: 100vw;"
+		>
+			<div
+				class="spinner-border text-warning"
+				role="status"
+				style="font-size: 33vw;"
+			>
+				<span class="sr-only">Loading...</span>
+			</div>
+			<h1>Lost Connection to WWSU</h1>
+			<h3>
+				Attempting to reconnect. Connection loss could be from a bad network
+				connection or WWSU's server rebooting.
+			</h3>
+			<h4>Host ID: <span class="connecting-id">(loading...)</span></h4>
+		</div>
+
+		<!-- All other content -->
+		<div class="wrapper d-none" id="content">
+			<nav class="main-header navbar navbar-expand navbar-white navbar-light">
+				<!-- Left navbar links -->
+				<ul class="navbar-nav">
+					<li class="nav-item">
+						<button
+							class="nav-link"
+							data-widget="pushmenu"
+							title="Display / Hide Side Menu"
+							aria-label="Display / Hide Side Menu"
+						>
+							<i class="fas fa-bars" aria-hidden="true"></i>
+						</button>
+					</li>
+				</ul>
+			</nav>
+
+			<!-- Main Sidebar Menu -->
+			<aside class="main-sidebar sidebar-dark-maroon elevation-4">
+				<!-- Logo -->
+				<a href="#" class="brand-link">
+					<img
+						src="assets/images/logo_round.png"
+						alt="WWSU logo"
+						class="brand-image img-circle elevation-3"
+						style="opacity: 0.8;"
+					/>
+					<span class="brand-text font-weight-light">WWSU Timesheets</span>
+				</a>
+
+				<!-- Sidebar -->
+				<div class="sidebar">
+					<!-- Sidebar station time -->
+					<div class="user-panel mt-3 pb-3 mb-3 d-flex">
+						<div class="image text-light">
+							<i class="nav-icon fas fa-clock"></i>
+						</div>
+						<div class="info">
+							<span class="d-block text-light meta-time">Unknown Time</span>
+						</div>
+					</div>
+
+					<!-- Sidebar Menu -->
+					<nav class="mt-2">
+						<ul
+							class="nav nav-pills nav-sidebar nav-compact nav-flat flex-column"
+							data-widget="treeview"
+							role="menu"
+							data-accordion="false"
+						>
+							<li class="nav-item">
+								<a href="#" class="nav-link" id="nav-home" title="Front Page">
+									<i class="nav-icon fas fa-lightbulb"></i>
+									<p>
+										Home
+									</p>
+								</a>
+							</li>
+							<li class="nav-header text-light">DIRECTORS</li>
+							<div id="nav-directors"></div>
+							<li class="nav-header text-light">ASSISTANTS</li>
+							<div id="nav-assistants"></div>
+							<li class="nav-header text-light">CALENDAR</li>
+							<li class="nav-item">
+								<a
+									href="#"
+									class="nav-link"
+									id="nav-calendar"
+									title="Manage timesheet hours."
+								>
+									<i class="nav-icon fas fa-calendar"></i>
+									<p>
+										Office Hours
+									</p>
+								</a>
+							</li>
+						</ul>
+					</nav>
+					<!-- /.sidebar-menu -->
+				</div>
+				<!-- /.sidebar -->
+			</aside>
+
+			<section id="section-home">
+				<div class="content-wrapper">
+					<!-- Content Header (Page header) -->
+					<div class="content-header">
+						<div class="container-fluid">
+							<div class="row mb-2">
+								<div class="col-sm-6">
+									<h1 class="m-0 text-dark">WWSU Timesheets</h1>
+								</div>
+								<!-- /.col -->
+							</div>
+							<!-- /.row -->
+						</div>
+						<!-- /.container-fluid -->
+					</div>
+					<!-- /.content-header -->
+
+					<!-- Main content -->
+					<div class="content">
+						<div class="card card-primary card-outline p-1 m-3">
+							<div class="card-body box-profile">
+								<div class="text-center" style="font-size: 5rem;">
+									<img
+										src="assets/images/logo_round.png"
+										alt="WWSU logo"
+                                        class="brand-image img-circle elevation-3"
+                                        style="width: 33%;"
+									/>
+								</div>
+
+								<p class="text-center h1">
+									WWSU 106.9 FM
+								</p>
+
+								<p class="text-center meta-time h2">
+									Unknown Time
+								</p>
+
+								<p class="text-muted text-center h6">
+									To clock in or out, or to edit recurring office hours, please click your name in the left menu.
+								</p>
+
+								<p class="text-muted text-center h6">
+									To view / cancel / re-schedule office hours on specific days/times, click "Office Hours" in
+									the menu.
+								</p>
+							</div>
+							<!-- /.card-body -->
+						</div>
+					</div>
+				</div>
+            </section>
+            
+            <div id="sections-directors"></div>
+
+            <!-- Calendar -->
+			<section id="section-calendar">
+				<div class="content-wrapper">
+					<div class="content-header">
+						<div class="container-fluid">
+							<div class="row mb-2">
+								<div class="col-12">
+									<h1 class="m-0 text-dark">Calendar</h1>
+								</div>
+								<!-- /.col -->
+							</div>
+							<!-- /.row -->
+						</div>
+						<!-- /.container-fluid -->
+					</div>
+
+					<div class="content">
+						<div class="container-fluid">
+							<div class="row">
+								<!-- /.col -->
+								<div class="col">
+									<div class="card">
+										<div class="card-header">
+											<h4 class="card-title">Info / Tasks</h4>
+										</div>
+										<div class="card-body">
+											
+										</div>
+									</div>
+									<div class="card card-primary">
+										<div class="card-body p-0">
+											<p class="p-1">
+												<strong
+													>All event times are displayed in your local time
+													zone, but you will use the station timezone when
+													specifying times in schedules.</strong
+												>
+											</p>
+											<!-- THE CALENDAR -->
+											<div id="calendar"></div>
+										</div>
+										<!-- /.card-body -->
+									</div>
+									<!-- /.card -->
+								</div>
+								<!-- /.col -->
+							</div>
+							<!-- /.row -->
+							<div class="row">
+								<div class="col">
+									<div class="callout callout-info">
+										<h5>Manage online</h5>
+
+										<p>
+											You can also edit the calendar online at
+											server.wwsu1069.org/directors/calendar
+										</p>
+									</div>
+								</div>
+							</div>
+						</div>
+						<!-- /.container-fluid -->
+					</div>
+				</div>
+			</section>
+
+			<!-- Control Sidebar -->
+			<aside class="control-sidebar control-sidebar-dark">
+				<!-- Control sidebar content goes here -->
+			</aside>
+			<!-- /.control-sidebar -->
+
+			<!-- Main Footer -->
+			<footer class="main-footer">
+				This application was developed by Patrick Schmalstig. You may contact
+				them at <strong>xanaftp@gmail.com</strong>
+				if there are any problems with it.
+			</footer>
+		</div>
+		<!-- ./wrapper -->
+
+		<script src="renderer.js"></script>
+	</body>
+</html>

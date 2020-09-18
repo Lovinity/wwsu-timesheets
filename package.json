@@ -1,23 +1,23 @@
 {
 	"name": "wwsu-timesheets",
-	"productName": "wwsu timesheets",
-	"version": "0.0.0",
-	"description": "My premium app",
+	"productName": "wwsu-timesheets",
+	"version": "4.0.0-alpha.1",
+	"appId": "com.Lovinity.wwsu-timesheets",
+	"description": "Timesheet management application for WWSU 106.9 FM",
 	"license": "MIT",
-	"repository": "xanaftp@gmail.com/wwsu-timesheets",
+	"repository": "https://github.com/Lovinity/wwsu-timesheets",
 	"author": {
 		"name": "Patrick Schmalstig",
 		"email": "xanaftp@gmail.com",
-		"url": "wwsu1069.org"
+		"url": "https://wwsu1069.org"
 	},
 	"scripts": {
 		"postinstall": "electron-builder install-app-deps",
 		"lint": "xo",
-		"test": "npm run lint",
 		"start": "electron .",
 		"pack": "electron-builder --dir",
-		"dist": "electron-builder --macos --linux --windows",
-		"release": "np"
+		"dist": "electron-builder",
+		"release": "electron-builder --macos --linux --windows -p always"
 	},
 	"dependencies": {
 		"electron-context-menu": "^2.3.0",
@@ -25,7 +25,8 @@
 		"electron-store": "^6.0.0",
 		"electron-unhandled": "^3.0.2",
 		"electron-updater": "^4.3.5",
-		"electron-util": "^0.14.2"
+		"electron-util": "^0.14.2",
+		"semver": "^7.3.2"
 	},
 	"devDependencies": {
 		"electron": "^10.1.2",
@@ -41,35 +42,29 @@
 	},
 	"np": {
 		"publish": false,
-		"releaseDraft": false
+		"releaseDraft": true
 	},
 	"build": {
-		"appId": "com.xanaftp@gmail.com.wwsu-timesheets",
+		"appId": "com.Lovinity.wwsu-timesheets",
+		"productName": "WWSU Timesheets",
+		"copyright": "Copyright © 2018-2020 WWSU 106.9 FM",
 		"mac": {
-			"category": "public.app-category.social-networking",
-			"darkModeSupport": true
-		},
-		"dmg": {
-			"iconSize": 160,
-			"contents": [
-				{
-					"x": 180,
-					"y": 170
-				},
-				{
-					"x": 480,
-					"y": 170,
-					"type": "link",
-					"path": "/Applications"
-				}
+			"category": "public.app-category.business",
+			"darkModeSupport": false,
+			"target": [
+				"pkg"
 			]
 		},
 		"linux": {
 			"target": [
-				"AppImage",
-				"deb"
+				"deb",
+				"rpm"
 			],
-			"category": "Network;Chat"
+			"category": "Utility"
+		},
+		"nsis": {
+			"oneClick": false,
+			"allowToChangeInstallationDirectory": true
 		}
 	}
 }
