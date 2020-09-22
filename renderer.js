@@ -45,7 +45,7 @@ window.addEventListener("DOMContentLoaded", () => {
 		socket,
 		machineID,
 		directors,
-		(record) => record.admin,
+		{ admin: true },
 		"name",
 		"/auth/admin-director",
 		"Administrator Director"
