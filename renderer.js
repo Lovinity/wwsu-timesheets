@@ -81,6 +81,7 @@ window.addEventListener("DOMContentLoaded", () => {
 		hostReq,
 		directorReq
 	);
+	var inventory = new WWSUinventory(socket, meta, hostReq, directorReq);
 	var version = new WWSUversion(socket, `wwsu-timesheets`, hostReq);
 
 	// Models
@@ -108,6 +109,13 @@ window.addEventListener("DOMContentLoaded", () => {
 		() => {
 			fullCalendar.updateSize();
 		}
+	);
+	navigation.addItem(
+		"#nav-inventory",
+		"#section-inventory",
+		"Manage Inventory - WWSU Timesheets",
+		"/inventory",
+		false
 	);
 
 	/*
@@ -256,7 +264,9 @@ window.addEventListener("DOMContentLoaded", () => {
 					djs.init();
 					calendar.init();
 					announcements.init();
+					inventory.init()
 					version.init();
+					inventory.initTable("#section-inventory-content");
 				} else if (success === -1) {
 					$("#content").addClass("d-none");
 					$("#already-connected").removeClass("d-none");

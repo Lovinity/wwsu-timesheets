@@ -1,7 +1,7 @@
 {
 	"name": "wwsu-timesheets",
 	"productName": "wwsu-timesheets",
-	"version": "4.0.0-alpha.2",
+	"version": "4.0.0-alpha.3",
 	"appId": "com.Lovinity.wwsu-timesheets",
 	"description": "Timesheet management application for WWSU 106.9 FM",
 	"license": "MIT",

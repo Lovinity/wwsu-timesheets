@@ -1,5 +1,10 @@
 # WWSU Timesheets Changelog
 
+## 4.0.0-alpha.3 - 2020-10-01
+
+### Added
+- Inventory management
+
 ## 4.0.0-alpha.2 - 2020-09-22
 
 ### Changed
