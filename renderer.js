@@ -68,7 +68,6 @@ window.addEventListener("DOMContentLoaded", () => {
 		meta,
 		directorReq
 	);
-	var timesheets = new WWSUtimesheet(socket, noReq, adminDirectorReq, meta);
 	var calendar = new WWSUcalendar(socket, meta, noReq, directorReq, djReq);
 	var discipline = new WWSUdiscipline(socket, noReq, directorReq, meta);
 	var recipients = new WWSUrecipients(socket, meta, hostReq);
@@ -81,15 +80,24 @@ window.addEventListener("DOMContentLoaded", () => {
 		hostReq,
 		directorReq
 	);
+	var timesheets = new WWSUtimesheet(
+		socket,
+		noReq,
+		directorReq,
+		adminDirectorReq,
+		meta,
+		hosts
+	);
 	var inventory = new WWSUinventory(socket, meta, hostReq, directorReq);
 	var version = new WWSUversion(socket, `wwsu-timesheets`, hostReq);
 
-	// Models
-	var clockModal = new WWSUmodal(`Clock`, null, ``, true, {
-		headerColor: "",
-		overlayClose: false,
-		zindex: 1100,
-	});
+	timesheets.init(
+		`#section-timesheets-hours`,
+		`#section-timesheets-records`,
+		`#section-timesheets-start`,
+		`#section-timesheets-end`,
+		`#section-timesheets-browse`
+	);
 
 	// navigation
 	var navigation = new WWSUNavigation();
@@ -104,7 +112,7 @@ window.addEventListener("DOMContentLoaded", () => {
 		"#nav-calendar",
 		"#section-calendar",
 		"Manage Calendar - WWSU Timesheets",
-		"/calendar",
+		"/directors/calendar",
 		false,
 		() => {
 			fullCalendar.updateSize();
@@ -114,7 +122,14 @@ window.addEventListener("DOMContentLoaded", () => {
 		"#nav-inventory",
 		"#section-inventory",
 		"Manage Inventory - WWSU Timesheets",
-		"/inventory",
+		"/directors/inventory",
+		false
+	);
+	navigation.addItem(
+		"#nav-timesheets",
+		"#section-timesheets",
+		"Director timesheets - WWSU DJ Controls",
+		"/directors/timesheets",
 		false
 	);
 
@@ -126,23 +141,22 @@ window.addEventListener("DOMContentLoaded", () => {
 	var calendarEl = document.getElementById("calendar");
 
 	var fullCalendar = new FullCalendar.Calendar(calendarEl, {
-		plugins: ["interaction", "dayGrid", "timeGrid", "bootstrap"],
-		header: {
-			left: "prev,next today",
+		headerToolbar: {
+			start: "prev,next today",
 			center: "title",
-			right: "dayGridMonth,timeGridWeek,timeGridDay",
+			end: "dayGridMonth,timeGridWeek,timeGridDay,listWeek",
 		},
-		defaultView: "timeGridWeek",
+		initialView: "timeGridWeek",
 		navLinks: true, // can click day/week names to navigate views
 		selectable: false,
 		selectMirror: true,
 		nowIndicator: true,
 		editable: false,
-		startEditable: false,
-		durationEditable: false,
-		resourceEditable: false,
+		eventStartEditable: false,
+		eventDurationEditable: false,
+		eventResourceEditable: false,
 		themeSystem: "bootstrap",
-		eventLimit: true, // allow "more" link when too many events
+		dayMaxEvents: 5,
 		events: function (info, successCallback, failureCallback) {
 			animations.add("calendar-refetch", () => {
 				$("#calendar").block({
@@ -152,50 +166,63 @@ window.addEventListener("DOMContentLoaded", () => {
 					onBlock: () => {
 						calendar.getEvents(
 							(events) => {
-								events = events.map((event) => {
-									// Do not show anything but office hours
-									if (event.type !== "office-hours") return false;
-
-									var borderColor;
-									if (event.scheduleType === "canceled-changed") return false;
-									if (
-										["canceled", "canceled-system"].indexOf(
-											event.scheduleType
-										) !== -1
-									) {
-										borderColor = "#ff0000";
-									} else if (
-										["updated", "updated-system"].indexOf(
-											event.scheduleType
-										) !== -1
-									) {
-										borderColor = "#ffff00";
-									} else if (
-										["unscheduled"].indexOf(event.scheduleType) !== -1
-									) {
-										borderColor = "#00ff00";
-									} else {
-										borderColor = "#0000ff";
-									}
-									return {
-										id: event.unique,
-										groupId: event.calendarID,
-										start: moment.parseZone(event.start).toISOString(true),
-										end: moment.parseZone(event.end).toISOString(true),
-										title: `${event.type}: ${event.hosts} - ${event.name}`,
-										backgroundColor:
+								events = events
+									.filter((event) => {
+										// Filter out events by filters
+										if (event.scheduleType === "canceled-changed") return false;
+										var temp = document.getElementById(`filter-${event.type}`);
+										if (temp !== null && temp.checked) {
+											return true;
+										} else {
+											return false;
+										}
+									})
+									.map((event) => {
+										var borderColor;
+										var title = `${event.type}: ${event.hosts} - ${event.name}`;
+										if (
 											["canceled", "canceled-system"].indexOf(
 												event.scheduleType
-											) === -1
-												? event.color
-												: "#161616",
-										textColor: "#e6e6e6",
-										borderColor: borderColor,
-										extendedProps: {
-											event: event,
-										},
-									};
-								});
+											) !== -1
+										) {
+											borderColor = "#ff0000";
+											title += ` (CANCELED)`;
+										} else if (
+											["updated", "updated-system"].indexOf(
+												event.scheduleType
+											) !== -1
+										) {
+											borderColor = "#ffff00";
+											title += ` (changed this occurrence)`;
+										} else if (
+											["unscheduled"].indexOf(event.scheduleType) !== -1
+										) {
+											borderColor = "#00ff00";
+											title += ` (unscheduled/unauthorized)`;
+										} else {
+											borderColor = "#0000ff";
+										}
+										return {
+											id: event.unique,
+											groupId: event.calendarID,
+											start: moment.parseZone(event.start).toISOString(true),
+											end: moment.parseZone(event.end).toISOString(true),
+											title: title,
+											backgroundColor:
+												["canceled", "canceled-system"].indexOf(
+													event.scheduleType
+												) === -1
+													? event.color
+													: "#161616",
+											textColor: wwsuutil.getContrastYIQ(event.color)
+												? "#161616"
+												: "#e6e6e6",
+											borderColor: borderColor,
+											extendedProps: {
+												event: event,
+											},
+										};
+									});
 								successCallback(events);
 								fullCalendar.updateSize();
 								$("#calendar").unblock();
@@ -208,32 +235,43 @@ window.addEventListener("DOMContentLoaded", () => {
 			});
 		},
 
-		eventRender: function eventRender(info) {
-			if (info.event.extendedProps.event.scheduleType === "canceled-changed")
-				return false;
-			info.el.title = info.event.title;
-			if (
-				["canceled", "canceled-system"].indexOf(
-					info.event.extendedProps.event.scheduleType
-				) !== -1
-			) {
-				info.el.title += ` (CANCELED)`;
-			}
-			if (
-				["updated", "updated-system"].indexOf(
-					info.event.extendedProps.event.scheduleType
-				) !== -1
-			) {
-				info.el.title += ` (edited on this occurrence)`;
-			}
-			return true;
-		},
-
 		eventClick: function (info) {
 			calendar.showClickedEvent(info.event.extendedProps.event);
 		},
 	});
 	fullCalendar.render();
+
+	// Click events for tasks buttons
+	$(".btn-calendar-definitions").click(() => {
+		calendar.definitionsModal.iziModal("open");
+	});
+	$(".btn-calendar-prerequisites").click(() => {
+		calendar.prerequisitesModal.iziModal("open");
+	});
+	$(".btn-manage-events").click(() => {
+		calendar.showSimpleEvents();
+	});
+
+	// Add click events to the filter by switches
+	[
+		"show",
+		"sports",
+		"remote",
+		"prerecord",
+		"genre",
+		"playlist",
+		"event",
+		"onair-booking",
+		"prod-booking",
+		"office-hours",
+	].map((type) => {
+		var temp = document.getElementById(`filter-${type}`);
+		if (temp !== null) {
+			temp.addEventListener("click", (e) => {
+				fullCalendar.refetchEvents();
+			});
+		}
+	});
 
 	// execute updateCalendar function each time calendar has been changed, but add a 1-second buffer so we don't update a million times at once.
 	let calTimer;
@@ -264,7 +302,7 @@ window.addEventListener("DOMContentLoaded", () => {
 					djs.init();
 					calendar.init();
 					announcements.init();
-					inventory.init()
+					inventory.init();
 					version.init();
 					inventory.initTable("#section-inventory-content");
 				} else if (success === -1) {
@@ -376,7 +414,11 @@ window.addEventListener("DOMContentLoaded", () => {
                         title="Clock in/out ${director.name}"
                     >
                         <i class="nav-icon fas fa-user text-${
-													director.present ? `success` : `danger`
+													director.present
+														? director.present === 2
+															? `indigo`
+															: `success`
+														: `danger`
 												}"></i>
                         <p>
                             ${director.name}
@@ -406,7 +448,11 @@ window.addEventListener("DOMContentLoaded", () => {
 
                             <div class="card card-widget widget-user-2">
                                 <div class="widget-user-header bg-${
-																	director.present ? `success` : `danger`
+																	director.present
+																		? director.present === 2
+																			? `indigo`
+																			: `success`
+																		: `danger`
 																}">
                                 <div class="row">
                                     <div class="col">
@@ -424,7 +470,9 @@ window.addEventListener("DOMContentLoaded", () => {
                                     <!-- /.widget-user-image -->
                                     <h3 class="widget-user-username">${
 																			director.present
-																				? `Clocked In Since`
+																				? director.present === 2
+																					? `Clocked In remotely Since`
+																					: `Clocked In Since`
 																				: `Last Seen`
 																		}</h3>
                                     <h5 class="widget-user-desc">
@@ -440,8 +488,18 @@ window.addEventListener("DOMContentLoaded", () => {
                                     </div>
                                 </div>
                                 </div>
-                            </div>
+							</div>
+							${
+								!hosts || !hosts.client || !hosts.client.authorized
+									? `<div class="callout callout-warning">
+							<h5>Remote Hours</h5>
 
+							<p>
+							You are not using the in-office timesheet computer. Therefore, if you clock in, your hours will be logged as remote hours.
+							</p>
+						</div>`
+									: ``
+							}
                             <div class="card card-primary elevation-2">
                                 <div class="card-header">
                                     <h3 class="card-title">Actions</h3>
@@ -451,8 +509,10 @@ window.addEventListener("DOMContentLoaded", () => {
                                     <button
                                         class="btn btn-app bg-${
 																					director.present
-																						? `danger`
-																						: `success`
+																						? director.present === 2
+																							? `indigo`
+																							: `success`
+																						: `danger`
 																				}"
                                         id="section-director-${
 																					director.ID
@@ -496,132 +556,7 @@ window.addEventListener("DOMContentLoaded", () => {
 					$(`#section-director-${director.ID}-clock`).unbind("click");
 					$(`#section-director-${director.ID}-clock`).click(() => {
 						((_director) => {
-							clockModal.title = `${_director.name} - Clock ${
-								_director.present ? `Out` : `In`
-							}`;
-
-							clockModal.iziModal("open");
-
-							clockModal.body = ``;
-
-							$(clockModal.body).alpaca({
-								schema: {
-									title: `Clock ${_director.present ? `Out` : `In`}`,
-									type: "object",
-									properties: {
-										name: {
-											type: "string",
-											required: true,
-										},
-										password: {
-											type: "string",
-											required: true,
-											format: "password",
-											title: "Password",
-										},
-										timestamp: {
-											title: `Clock-${_director.present ? `Out` : `In`} Time`,
-											format: "datetime",
-										},
-									},
-								},
-								options: {
-									fields: {
-										name: {
-											type: "hidden",
-										},
-										timestamp: {
-											dateFormat: `YYYY-MM-DDTHH:mm:[00]${moment
-												.parseZone(this.meta ? this.meta.meta.time : undefined)
-												.format("Z")}`,
-											picker: {
-												inline: true,
-												sideBySide: true,
-											},
-											helper: `Be aware if you specify a time 30+ minutes from now, this record will be marked unapproved and will need approved by an admin director.`,
-										},
-									},
-									form: {
-										buttons: {
-											submit: {
-												title: `Clock ${_director.present ? `Out` : `In`}`,
-												click: (form, e) => {
-													form.refreshValidationState(true);
-													if (!form.isValid(true)) {
-														form.focus();
-														return;
-													}
-													var value = form.getValue();
-													directorReq._authorize(
-														value.name,
-														value.password,
-														(body) => {
-															if (
-																body === 0 ||
-																typeof body.token === `undefined`
-															) {
-																$(document).Toasts("create", {
-																	class: "bg-warning",
-																	title: "Authorization Error",
-																	body:
-																		"There was an error authorizing you. Did you type your password in correctly? Please contact the engineer if this is a bug.",
-																	delay: 15000,
-																});
-															} else {
-																directorReq._tryRequest(
-																	{
-																		method: "POST",
-																		url: "/timesheet/add",
-																		data: {
-																			timestamp: moment(
-																				value.timestamp
-																			).toISOString(true),
-																		},
-																	},
-																	(body2) => {
-																		if (body2 === "OK") {
-																			$(document).Toasts("create", {
-																				class: "bg-success",
-																				title: `Clocked ${
-																					_director.present ? `Out` : `In`
-																				}`,
-																				autohide: true,
-																				delay: 10000,
-																				body: `You successfully clocked ${
-																					_director.present ? `Out` : `In`
-																				}. ${
-																					_director.present
-																						? `Have a good day!`
-																						: `Welcome!`
-																				}`,
-																			});
-																			clockModal.iziModal("close");
-																			navigation.processMenu(`#nav-home`);
-																		} else {
-																			$(document).Toasts("create", {
-																				class: "bg-warning",
-																				title: "Timesheet Error",
-																				body:
-																					"There was an error adding your record. Please contact the engineer.",
-																				delay: 10000,
-																			});
-																		}
-																	}
-																);
-															}
-														}
-													);
-												},
-											},
-										},
-									},
-								},
-								data: {
-									name: _director.name,
-									password: ``,
-									timestamp: moment().toISOString(true),
-								},
-							});
+							timesheets.clockForm(_director.ID);
 						})(director);
 					});
 

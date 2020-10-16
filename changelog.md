@@ -1,5 +1,17 @@
 # WWSU Timesheets Changelog
 
+## 4.0.0-alpha.4 - 2020-10-16
+
+### Added
+- Remote hours support
+- Field for logging accomplishments in the clock-out form.
+
+### Changed
+- Calendar is now a standard system calendar instead of office-hours-only.
+
+### Updated
+- Plugins and packages
+
 ## 4.0.0-alpha.3 - 2020-10-01
 
 ### Added

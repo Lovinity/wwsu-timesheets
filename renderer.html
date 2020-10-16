@@ -31,13 +31,13 @@
 		<!-- jQuery -->
 		<script src="assets/plugins/jquery/jquery.min.js"></script>
 		<!-- JQuery BlockUI -->
-		<script src="assets/plugins/jquery-blockui/js/jquery.blockUI.js"></script>
+		<script src="assets/plugins/jquery-blockui/jquery.blockUI.js"></script>
 		<!-- JQuery multipleselect -->
 		<link
 			rel="stylesheet"
-			href="assets/plugins/jquery-multipleselect/css/multiple-select.min.css"
+			href="assets/plugins/jquery-multiselect/jquery-MultiSelect.css"
 		/>
-		<script src="assets/plugins/jquery-multipleselect/js/multiple-select.min.js"></script>
+		<script src="assets/plugins/jquery-multiselect/jquery-MultiSelect.js"></script>
 		<!-- JQuery overlayScrollbars -->
 		<script src="assets/plugins/overlayScrollbars/js/jquery.overlayScrollbars.min.js"></script>
 		<!-- JQuery Mousewheel -->
@@ -49,28 +49,28 @@
 		<script src="assets/plugins/adminlte/js/adminlte.js"></script>
 
 		<!-- lodash -->
-		<script src="assets/plugins/lodash/js/lodash.min.js"></script>
+		<script src="assets/plugins/lodash/lodash.min.js"></script>
 		<!-- Taffy -->
-		<script src="assets/plugins/taffy/js/taffy-min.js"></script>
+		<script src="assets/plugins/taffydb/taffy-min.js"></script>
 		<!-- Moment -->
 		<script src="assets/plugins/moment/moment.min.js"></script>
 		<!-- Moment timezone -->
-		<script src="assets/plugins/moment-timezone/js/moment-timezone-with-data.js"></script>
+		<script src="assets/plugins/moment-timezone/moment-timezone-with-data.js"></script>
 		<!-- Moment Duration Format -->
-		<script src="assets/plugins/moment-duration-format/js/moment-duration-format.js"></script>
+		<script src="assets/plugins/moment-duration-format/moment-duration-format.js"></script>
 		<!-- Moment Recur -->
-		<script src="assets/plugins/moment-recur-ts/js/moment-recur-ts.js"></script>
+		<script src="assets/plugins/moment-recur-ts/moment-recur-ts.js"></script>
 		<!-- Jdenticon -->
-		<script src="assets/plugins/jdenticon/js/jdenticon.min.js"></script>
+		<script src="assets/plugins/jdenticon/jdenticon.min.js"></script>
 		<!-- Howler -->
-		<script src="assets/plugins/howler/js/howler.min.js"></script>
+		<script src="assets/plugins/howler/howler.min.js"></script>
 
 		<!-- Chart.js -->
 		<script src="assets/plugins/chart.js/Chart.bundle.min.js"></script>
 		<link rel="stylesheet" href="assets/plugins/chart.js/Chart.min.css" />
 
 		<!-- TinyMCE -->
-		<script src="assets/plugins/tinymce/js/tinymce.min.js"></script>
+		<script src="assets/plugins/tinymce/tinymce.min.js"></script>
 
 		<!-- Bootstrap Tempus Dominus (datetimepicker) -->
 		<link
@@ -80,7 +80,7 @@
 		<script src="assets/plugins/bootstrap-tempusdominus/js/tempusdominus-bootstrap-4.min.js"></script>
 
 		<!-- Handlebars -->
-		<script src="assets/plugins/handlebars/js/handlebars.min.js"></script>
+		<script src="assets/plugins/handlebars/handlebars.min.js"></script>
 		<!-- Alpaca (custom build) -->
 		<script src="assets/plugins/alpaca-wwsu/alpaca.js"></script>
 		<link rel="stylesheet" href="assets/plugins/alpaca-wwsu/alpaca.min.css" />
@@ -119,28 +119,7 @@
 
 		<!--FullCalendar-->
 		<script src="assets/plugins/fullcalendar/main.min.js"></script>
-		<script src="assets/plugins/fullcalendar-bootstrap/main.min.js"></script>
-		<script src="assets/plugins/fullcalendar-daygrid/main.min.js"></script>
-		<script src="assets/plugins/fullcalendar-timegrid/main.min.js"></script>
-		<script src="assets/plugins/fullcalendar-interaction/main.min.js"></script>
-		<script src="assets/plugins/fullcalendar-list/main.min.js"></script>
 		<link rel="stylesheet" href="assets/plugins/fullcalendar/main.min.css" />
-		<link
-			rel="stylesheet"
-			href="assets/plugins/fullcalendar-bootstrap/main.min.css"
-		/>
-		<link
-			rel="stylesheet"
-			href="assets/plugins/fullcalendar-daygrid/main.min.css"
-		/>
-		<link
-			rel="stylesheet"
-			href="assets/plugins/fullcalendar-timegrid/main.min.css"
-		/>
-		<link
-			rel="stylesheet"
-			href="assets/plugins/fullcalendar-list/main.min.css"
-		/>
 
 		<!--WWSU-->
 		<script
@@ -343,15 +322,15 @@
 									href="#"
 									class="nav-link"
 									id="nav-calendar"
-									title="Manage timesheet hours."
+									title="Manage WWSU events calendar."
 								>
 									<i class="nav-icon fas fa-calendar"></i>
 									<p>
-										Office Hours
+										Calendar
 									</p>
 								</a>
 							</li>
-							<li class="nav-header text-light">INVENTORY</li>
+							<li class="nav-header text-light">OTHER</li>
 							<li class="nav-item">
 								<a
 									href="#"
@@ -362,6 +341,19 @@
 									<i class="nav-icon fas fa-box"></i>
 									<p>
 										Inventory
+									</p>
+								</a>
+							</li>
+							<li class="nav-item">
+								<a
+									href="#"
+									class="nav-link"
+									id="nav-timesheets"
+									title="Manage and view the timesheets and clocked hours of directors."
+								>
+									<i class="nav-icon fas fa-clock"></i>
+									<p>
+										Timesheets
 									</p>
 								</a>
 							</li>
@@ -415,7 +407,7 @@
 								</p>
 
 								<p class="text-muted text-center h6">
-									To view / cancel / re-schedule office hours on specific days/times, click "Office Hours" in
+									To view / cancel / re-schedule office hours on specific days/times, click "Calendar" in
 									the menu.
 								</p>
 							</div>
@@ -444,6 +436,16 @@
 					</div>
 
 					<div class="content">
+						<div class="callout callout-warning">
+							<h5>Keep Up To Date</h5>
+							<p>
+								Please keep the calendar up to date at all times. The calendar
+								is visible in many public places, such as the display signs and
+								the website. The calendar also tells the system what broadcasts
+								are expected to air and when, or which directors are expected to
+								be in the office.
+							</p>
+						</div>
 						<div class="container-fluid">
 							<div class="row">
 								<!-- /.col -->
@@ -452,11 +454,216 @@
 										<div class="card-header">
 											<h4 class="card-title">Info / Tasks</h4>
 										</div>
-										<div class="card-body">
-											
+										<div class="card-body container-fluid">
+											<div class="container-fluid">
+												<div class="row">
+													<div class="col-12 col-md-6 col-lg-4">
+														<button
+															type="button"
+															class="btn btn-block btn-info btn-sm btn-calendar-definitions"
+															title="Open a pop-up explaining what an event, schedule, and occurrence is."
+														>
+															Definitions
+														</button>
+													</div>
+													<div class="col-12 col-md-6 col-lg-4">
+														<button
+															type="button"
+															class="btn btn-block btn-info btn-sm btn-calendar-prerequisites"
+															title="Open a pop-up explaining what must be done for different types of events before adding them to the calendar."
+														>
+															Prerequisites
+														</button>
+													</div>
+													<div class="col-12 col-md-6 col-lg-4">
+														<button
+															type="button"
+															class="btn btn-block btn-warning btn-sm btn-manage-events"
+															title="Add, edit, and remove events and their schedules (for occurrences, use the calendar)."
+														>
+															Manage Events / Schedules
+														</button>
+													</div>
+												</div>
+											</div>
 										</div>
 									</div>
+									<div class="card">
+										<div class="card-header">
+											<h4 class="card-title">Filter Calendar by Event Type</h4>
+										</div>
+										<div class="card-body container-fluid">
+											<div class="row p-2">
+												<div
+													class="col-md-4 col-sm-6 custom-control custom-switch custom-switch-on-danger"
+													title="Show live shows on calendar?"
+												>
+													<input
+														type="checkbox"
+														class="custom-control-input"
+														id="filter-show"
+														checked
+													/>
+													<label class="custom-control-label" for="filter-show"
+														>Live Shows</label
+													>
+												</div>
+												<div
+													class="col-md-4 col-sm-6 custom-control custom-switch custom-switch-on-success"
+													title="Show sports broadcasts on calendar?"
+												>
+													<input
+														type="checkbox"
+														class="custom-control-input"
+														id="filter-sports"
+														checked
+													/>
+													<label
+														class="custom-control-label"
+														for="filter-sports"
+														>Sports</label
+													>
+												</div>
+												<div
+													class="col-md-4 col-sm-6 custom-control custom-switch custom-switch-on-indigo"
+													title="Show remote broadcasts on calendar?"
+												>
+													<input
+														type="checkbox"
+														class="custom-control-input"
+														id="filter-remote"
+														checked
+													/>
+													<label
+														class="custom-control-label"
+														for="filter-remote"
+														>Remote Broadcasts</label
+													>
+												</div>
+												<div
+													class="col-md-4 col-sm-6 custom-control custom-switch custom-switch-on-pink"
+													title="Show prerecords on calendar?"
+												>
+													<input
+														type="checkbox"
+														class="custom-control-input"
+														id="filter-prerecord"
+														checked
+													/>
+													<label
+														class="custom-control-label"
+														for="filter-prerecord"
+														>Prerecords</label
+													>
+												</div>
+												<div
+													class="col-md-4 col-sm-6 custom-control custom-switch custom-switch-on-primary"
+													title="Show playlists on calendar?"
+												>
+													<input
+														type="checkbox"
+														class="custom-control-input"
+														id="filter-playlist"
+														checked
+													/>
+													<label
+														class="custom-control-label"
+														for="filter-playlist"
+														>Playlists</label
+													>
+												</div>
+												<div
+													class="col-md-4 col-sm-6 custom-control custom-switch custom-switch-on-info"
+													title="Show genre rotations on calendar?"
+												>
+													<input
+														type="checkbox"
+														class="custom-control-input"
+														id="filter-genre"
+													/>
+													<label class="custom-control-label" for="filter-genre"
+														>Genres</label
+													>
+												</div>
+												<div
+													class="col-md-4 col-sm-6 custom-control custom-switch custom-switch-on-gray"
+													title="Show manual events on calendar?"
+												>
+													<input
+														type="checkbox"
+														class="custom-control-input"
+														id="filter-event"
+													/>
+													<label class="custom-control-label" for="filter-event"
+														>Manual Events</label
+													>
+												</div>
+												<div
+													class="col-md-4 col-sm-6 custom-control custom-switch custom-switch-on-warning"
+													title="Show office hours on calendar?"
+												>
+													<input
+														type="checkbox"
+														class="custom-control-input"
+														id="filter-office-hours"
+													/>
+													<label
+														class="custom-control-label"
+														for="filter-office-hours"
+														>Director Office Hours</label
+													>
+												</div>
+												<div
+													class="col-md-4 col-sm-6 custom-control custom-switch custom-switch-on-orange"
+													title="Show tasks on calendar?"
+												>
+													<input
+														type="checkbox"
+														class="custom-control-input"
+														id="filter-task"
+													/>
+													<label class="custom-control-label" for="filter-task"
+														>Director Tasks</label
+													>
+												</div>
+												<div
+													class="col-md-4 col-sm-6 custom-control custom-switch custom-switch-on-teal"
+													title="Show reservations for the on-air studio on calendar?"
+												>
+													<input
+														type="checkbox"
+														class="custom-control-input"
+														id="filter-onair-booking"
+													/>
+													<label
+														class="custom-control-label"
+														for="filter-onair-booking"
+														>On-Air Bookings</label
+													>
+												</div>
+												<div
+													class="col-md-4 col-sm-6 custom-control custom-switch custom-switch-on-teal"
+													title="Show reservations for the production studio on calendar?"
+												>
+													<input
+														type="checkbox"
+														class="custom-control-input"
+														id="filter-prod-booking"
+													/>
+													<label
+														class="custom-control-label"
+														for="filter-prod-booking"
+														>Production Studio Bookings</label
+													>
+												</div>
+											</div>
+										</div>
+										<!-- /.card-body -->
+									</div>
 									<div class="card card-primary">
+										<div class="card-header">
+											<h4 class="card-title">Calendar</h4>
+										</div>
 										<div class="card-body p-0">
 											<p class="p-1">
 												<strong
@@ -515,6 +722,65 @@
 					<div class="content">
 						<div class="card elevation-2">
 							<div class="card-body" id="section-inventory-content"></div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- Timesheets -->
+			<section id="section-timesheets">
+				<div class="content-wrapper" style="padding-top: 8em;">
+					<div class="content-header">
+						<div class="container-fluid">
+							<div class="row mb-2">
+								<div class="col-12">
+									<h1 class="m-0 text-dark">Director Timesheets</h1>
+								</div>
+								<!-- /.col -->
+							</div>
+							<!-- /.row -->
+						</div>
+						<!-- /.container-fluid -->
+					</div>
+
+					<div class="content">
+						<div class="card card-primary elevation-2">
+							<div class="card-header">
+								<h3 class="card-title">Choose Date Range</h3>
+							</div>
+							<!-- /.card-header -->
+							<div class="card-body">
+								<div class="form-group" title="Choose timesheet date range.">
+									<label for="section-timesheets-start">Start</label>
+									<input type="date" id="section-timesheets-start" />
+									<label for="section-timesheets-end">End</label>
+									<input type="date" id="section-timesheets-end" />
+									<input
+										type="submit"
+										class="btn btn-primary"
+										id="section-timesheets-browse"
+										value="Browse"
+									/>
+								</div>
+							</div>
+						</div>
+
+						<div class="card card-warning elevation-2">
+							<div class="card-header">
+								<h3 class="card-title">Hours</h3>
+							</div>
+							<!-- /.card-header -->
+							<div class="card-body" id="section-timesheets-hours"></div>
+							<!-- /.card-body -->
+						</div>
+
+						<div class="card card-info elevation-2">
+							<div class="card-header">
+								<h3 class="card-title">Records</h3>
+							</div>
+							<!-- /.card-header -->
+							<div class="card-body" id="section-timesheets-records"></div>
+							<!-- /.card-body -->
 						</div>
 					</div>
 				</div>

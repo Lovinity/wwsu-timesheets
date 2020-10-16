@@ -439,13 +439,13 @@ class WWSUreq {
 	}
 
 	/**
-	 * Create an authorization prompt with iziModal and Alpaca.
+	 * Create an authorization prompt with iziModal.
 	 *
 	 * @param {function} cb Function called after user completes the prompt. Contains (username, password) as parameters.
 	 */
 	_promptLogin(cb) {
 		var fdb;
-		if (typeof this.filter === "object" && this._db) {
+		if (typeof this.filter === "object") {
 			fdb = this.db.db(this.filter);
 		} else {
 			fdb = this.db.db();
