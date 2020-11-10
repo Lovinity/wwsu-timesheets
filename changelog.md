@@ -1,5 +1,13 @@
 # WWSU Timesheets Changelog
 
+## 4.0.0-alpha.5 - 2020-11-10
+
+### Changed
+- Inventory list is now paged
+
+### Updated
+- Packages
+
 ## 4.0.0-alpha.4 - 2020-10-16
 
 ### Added

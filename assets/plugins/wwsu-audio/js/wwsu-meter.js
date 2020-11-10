@@ -1,11 +1,8 @@
 // Create an Audio node and meter/processor from the audio worklet
 
-const SMOOTHING_FACTOR = 0.98;
+const SMOOTHING_FACTOR = 0.94;
 const MINIMUM_VALUE = 0.00001;
 
-// This is the way to register an AudioWorkletProcessor
-// it's necessary to declare a name, in this case
-// the name is "vumeter"
 registerProcessor(
 	"wwsu-meter",
 	class extends AudioWorkletProcessor {
@@ -16,12 +13,16 @@ registerProcessor(
 		constructor() {
 			super();
 			this._volume = [0, 0];
-			this._updateIntervalInMS = 60;
+			this._updateIntervalInMS = 250;
 			this._nextUpdateFrame = this._updateIntervalInMS;
 			this.port.onmessage = (event) => {
 				if (event.data.updateIntervalInMS)
 					this._updateIntervalInMS = event.data.updateIntervalInMS;
+				if (event.data.destroy) {
+					this._destroyed = true;
+				}
 			};
+			this._destroyed = false;
 		}
 
 		get intervalInFrames() {
@@ -34,8 +35,7 @@ registerProcessor(
 			// Note that the input will be down-mixed to mono; however, if no inputs are
 			// connected then zero channels will be passed in.
 			if (input.length > 0) {
-
-				for (var inp in input) {
+				for (let inp in input) {
 					let samples = input[inp];
 					let sum = 0;
 					let rms = 0;
@@ -61,7 +61,7 @@ registerProcessor(
 				}
 			}
 
-			return true;
+			return !this._destroyed;
 		}
 	}
 );

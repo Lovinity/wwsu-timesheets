@@ -1,7 +1,7 @@
 {
 	"name": "wwsu-timesheets",
 	"productName": "wwsu-timesheets",
-	"version": "4.0.0-alpha.4",
+	"version": "4.0.0-alpha.5",
 	"appId": "com.Lovinity.wwsu-timesheets",
 	"description": "Timesheet management application for WWSU 106.9 FM",
 	"license": "MIT",
@@ -22,15 +22,15 @@
 	"dependencies": {
 		"electron-context-menu": "^2.3.0",
 		"electron-debug": "^3.1.0",
-		"electron-store": "^6.0.0",
+		"electron-store": "^6.0.1",
 		"electron-unhandled": "^3.0.2",
 		"electron-updater": "^4.3.5",
 		"electron-util": "^0.14.2",
 		"semver": "^7.3.2"
 	},
 	"devDependencies": {
-		"electron": "^10.1.2",
-		"electron-builder": "^22.8.1",
+		"electron": "^10.1.5",
+		"electron-builder": "^22.9.1",
 		"np": "^6.5.0",
 		"xo": "^0.33.1"
 	},
