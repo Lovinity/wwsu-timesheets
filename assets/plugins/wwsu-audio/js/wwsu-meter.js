@@ -1,6 +1,8 @@
+'use strict';
+
 // Create an Audio node and meter/processor from the audio worklet
 
-const SMOOTHING_FACTOR = 0.94;
+const SMOOTHING_FACTOR = 0.98;
 const MINIMUM_VALUE = 0.00001;
 
 registerProcessor(
@@ -12,8 +14,8 @@ registerProcessor(
 
 		constructor() {
 			super();
-			this._volume = [0, 0];
-			this._updateIntervalInMS = 250;
+			this._volume = [-1, -1];
+			this._updateIntervalInMS = 60;
 			this._nextUpdateFrame = this._updateIntervalInMS;
 			this.port.onmessage = (event) => {
 				if (event.data.updateIntervalInMS)
@@ -45,7 +47,7 @@ registerProcessor(
 						sum += samples[i] * samples[i];
 
 					// Calculate the RMS level and update the volume.
-					rms = Math.sqrt(sum / samples.length);
+					rms = samples.length > 0 ? Math.sqrt(sum / samples.length) : 0;
 					this._volume[inp] = Math.max(
 						rms,
 						this._volume[inp] * SMOOTHING_FACTOR

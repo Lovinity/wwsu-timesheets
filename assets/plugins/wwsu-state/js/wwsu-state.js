@@ -1,15 +1,20 @@
+"use strict";
+
 // This class handles states and operations.
+
+// REQUIRES these WWSUmodules: WWSUhosts, WWSUcalendar, WWSUconfig, hostReq (WWSureq), WWSUutil
 class WWSUstate extends WWSUevents {
 	/**
 	 * Construct the class
 	 *
-	 * @param {sails.io} socket Socket connection to WWSU
-	 * @param {WWSUhosts} hosts An instance of WWSUhosts to check for DJ locking and prompt if not a host.
-	 * @param {WWSUcalendar} calendar An instance of WWSUcalendar for checking what should be on the air now.
-	 * @param {WWSUreq} hostReq Request with host authorization
+	 * @param {WWSUmodules} manager The modules class which initiated this module
+	 * @param {object} options Options to be passed to this module
 	 */
-	constructor(socket, hosts, calendar, hostReq) {
+	constructor(manager, options) {
 		super();
+
+		this.manager = manager;
+
 		this.endpoints = {
 			return: "/state/return",
 			queuePSA: "/songs/queue-psa",
@@ -21,15 +26,13 @@ class WWSUstate extends WWSUevents {
 			delayStatus: "/delay/status",
 			live: "/state/live",
 			remote: "/state/remote",
+			sports: "/state/sports",
+			sportsRemote: "/state/sports-remote",
 		};
-		this.requests = {
-			host: hostReq,
-		};
+
 		this.data = {
 			get: {},
 		};
-		this.hosts = hosts;
-		this.calendar = calendar;
 
 		this.broadcastModal = new WWSUmodal(``, `operations`, ``, true, {
 			headerColor: "",
@@ -48,20 +51,22 @@ class WWSUstate extends WWSUevents {
 	 */
 	delayStatus(data, cb) {
 		try {
-			this.requests.host.request(
-				{ method: "post", url: this.endpoints.delayStatus, data },
-				(response) => {
-					if (response !== "OK") {
-						if (typeof cb === "function") {
-							cb(false);
-						}
-					} else {
-						if (typeof cb === "function") {
-							cb(true);
+			this.manager
+				.get("hostReq")
+				.request(
+					{ method: "post", url: this.endpoints.delayStatus, data },
+					(response) => {
+						if (response !== "OK") {
+							if (typeof cb === "function") {
+								cb(false);
+							}
+						} else {
+							if (typeof cb === "function") {
+								cb(true);
+							}
 						}
 					}
-				}
-			);
+				);
 		} catch (e) {
 			if (typeof cb === "function") {
 				cb(false);
@@ -78,30 +83,32 @@ class WWSUstate extends WWSUevents {
 	 */
 	return(data, cb) {
 		try {
-			this.hosts.promptIfNotHost(`return from break`, () => {
-				this.requests.host.request(
-					{ method: "post", url: this.endpoints.return, data },
-					(response) => {
-						if (response !== "OK") {
-							$(document).Toasts("create", {
-								class: "bg-danger",
-								title: "Error returning",
-								body:
-									"There was an error returning from break. Either you are not in a break, or your DJ controls prevents you from returning when you are not on the air. If neither of these are true, please contact the engineer.",
-								autoHide: true,
-								delay: 15000,
-								icon: "fas fa-skull-crossbones fa-lg",
-							});
-							if (typeof cb === "function") {
-								cb(false);
-							}
-						} else {
-							if (typeof cb === "function") {
-								cb(true);
+			this.manager.get("WWSUhosts").promptIfNotHost(`return from break`, () => {
+				this.manager
+					.get("hostReq")
+					.request(
+						{ method: "post", url: this.endpoints.return, data },
+						(response) => {
+							if (response !== "OK") {
+								$(document).Toasts("create", {
+									class: "bg-danger",
+									title: "Error returning",
+									body:
+										"There was an error returning from break. Either you are not in a break, or your DJ controls prevents you from returning when you are not on the air. If neither of these are true, please contact the engineer.",
+									autoHide: true,
+									delay: 15000,
+									icon: "fas fa-skull-crossbones fa-lg",
+								});
+								if (typeof cb === "function") {
+									cb(false);
+								}
+							} else {
+								if (typeof cb === "function") {
+									cb(true);
+								}
 							}
 						}
-					}
-				);
+					);
 			});
 		} catch (e) {
 			$(document).Toasts("create", {
@@ -128,41 +135,47 @@ class WWSUstate extends WWSUevents {
 	 */
 	queuePSA(data, cb) {
 		try {
-			this.hosts.promptIfNotHost(
-				`queue a ${data && data.duration ? `${data.duration}-second` : ``} PSA`,
-				() => {
-					this.requests.host.request(
-						{ method: "post", url: this.endpoints.queuePSA, data },
-						(response) => {
-							if (response !== "OK") {
-								$(document).Toasts("create", {
-									class: "bg-danger",
-									title: "Error adding PSA",
-									body:
-										"There was an error adding the PSA. Your DJ Controls might not allow you to do this when you are not on the air. If this is not the case, please contact the engineer.",
-									autoHide: true,
-									delay: 15000,
-									icon: "fas fa-skull-crossbones fa-lg",
-								});
-								if (typeof cb === "function") {
-									cb(false);
+			this.manager
+				.get("WWSUhosts")
+				.promptIfNotHost(
+					`queue a ${
+						data && data.duration ? `${data.duration}-second` : ``
+					} PSA`,
+					() => {
+						this.manager
+							.get("hostReq")
+							.request(
+								{ method: "post", url: this.endpoints.queuePSA, data },
+								(response) => {
+									if (response !== "OK") {
+										$(document).Toasts("create", {
+											class: "bg-danger",
+											title: "Error adding PSA",
+											body:
+												"There was an error adding the PSA. Your DJ Controls might not allow you to do this when you are not on the air. If this is not the case, please contact the engineer.",
+											autoHide: true,
+											delay: 15000,
+											icon: "fas fa-skull-crossbones fa-lg",
+										});
+										if (typeof cb === "function") {
+											cb(false);
+										}
+									} else {
+										$(document).Toasts("create", {
+											class: "bg-success",
+											title: "PSA Added",
+											autohide: true,
+											delay: 5000,
+											body: `PSA was added to the queue`,
+										});
+										if (typeof cb === "function") {
+											cb(true);
+										}
+									}
 								}
-							} else {
-								$(document).Toasts("create", {
-									class: "bg-success",
-									title: "PSA Added",
-									autohide: true,
-									delay: 5000,
-									body: `PSA was added to the queue`,
-								});
-								if (typeof cb === "function") {
-									cb(true);
-								}
-							}
-						}
-					);
-				}
-			);
+							);
+					}
+				);
 		} catch (e) {
 			$(document).Toasts("create", {
 				class: "bg-danger",
@@ -188,36 +201,40 @@ class WWSUstate extends WWSUevents {
 	 */
 	automation(data, cb) {
 		try {
-			this.hosts.promptIfNotHost(
-				`go to ${
-					data && data.transition ? `break for next show` : `automation`
-				}`,
-				() => {
-					this.requests.host.request(
-						{ method: "post", url: this.endpoints.automation, data },
-						(response) => {
-							if (response !== "OK") {
-								$(document).Toasts("create", {
-									class: "bg-danger",
-									title: "Error ending broadcast",
-									body:
-										"There was an error ending the broadcast. Your DJ Controls might not allow you to end broadcasts you did not start. If this is not the case, please contact the engineer.",
-									autoHide: true,
-									delay: 15000,
-									icon: "fas fa-skull-crossbones fa-lg",
-								});
-								if (typeof cb === "function") {
-									cb(false);
+			this.manager
+				.get("WWSUhosts")
+				.promptIfNotHost(
+					`go to ${
+						data && data.transition ? `break for next show` : `automation`
+					}`,
+					() => {
+						this.manager
+							.get("hostReq")
+							.request(
+								{ method: "post", url: this.endpoints.automation, data },
+								(response) => {
+									if (response !== "OK") {
+										$(document).Toasts("create", {
+											class: "bg-danger",
+											title: "Error ending broadcast",
+											body:
+												"There was an error ending the broadcast. Your DJ Controls might not allow you to end broadcasts you did not start. If this is not the case, please contact the engineer.",
+											autoHide: true,
+											delay: 15000,
+											icon: "fas fa-skull-crossbones fa-lg",
+										});
+										if (typeof cb === "function") {
+											cb(false);
+										}
+									} else {
+										if (typeof cb === "function") {
+											cb(response);
+										}
+									}
 								}
-							} else {
-								if (typeof cb === "function") {
-									cb(response);
-								}
-							}
-						}
-					);
-				}
-			);
+							);
+					}
+				);
 		} catch (e) {
 			$(document).Toasts("create", {
 				class: "bg-danger",
@@ -243,10 +260,10 @@ class WWSUstate extends WWSUevents {
 	 */
 	break(data, cb) {
 		try {
-			this.hosts.promptIfNotHost(
-				`go to ${data && data.halftime ? `extended ` : ``}break`,
-				() => {
-					this.requests.host.request(
+			let apiRequest = () => {
+				this.manager
+					.get("hostReq")
+					.request(
 						{ method: "post", url: this.endpoints.break, data },
 						(response) => {
 							if (response !== "OK") {
@@ -269,8 +286,21 @@ class WWSUstate extends WWSUevents {
 							}
 						}
 					);
-				}
-			);
+			};
+
+			// Skip host prompting if going to break because of a problem
+			if (data.problem) {
+				apiRequest();
+			} else {
+				this.manager
+					.get("WWSUhosts")
+					.promptIfNotHost(
+						`go to ${data && data.halftime ? `extended ` : ``}break`,
+						() => {
+							apiRequest();
+						}
+					);
+			}
 		} catch (e) {
 			$(document).Toasts("create", {
 				class: "bg-danger",
@@ -296,37 +326,39 @@ class WWSUstate extends WWSUevents {
 	 */
 	queueTopAdd(data, cb) {
 		try {
-			this.hosts.promptIfNotHost(`play a Top Add`, () => {
-				this.requests.host.request(
-					{ method: "post", url: this.endpoints.topAdd, data },
-					(response) => {
-						if (response !== "OK") {
-							$(document).Toasts("create", {
-								class: "bg-danger",
-								title: "Error queuing Top Add",
-								body:
-									"There was an error queuing a Top Add. Your DJ Controls might not allow you to do this when you are not on the air. If this is not the case, please contact the engineer.",
-								autoHide: true,
-								delay: 15000,
-								icon: "fas fa-skull-crossbones fa-lg",
-							});
-							if (typeof cb === "function") {
-								cb(false);
-							}
-						} else {
-							$(document).Toasts("create", {
-								class: "bg-success",
-								title: "Top Add Queued",
-								autohide: true,
-								delay: 5000,
-								body: `Top Add was added to the queue`,
-							});
-							if (typeof cb === "function") {
-								cb(true);
+			this.manager.get("WWSUhosts").promptIfNotHost(`play a Top Add`, () => {
+				this.manager
+					.get("hostReq")
+					.request(
+						{ method: "post", url: this.endpoints.topAdd, data },
+						(response) => {
+							if (response !== "OK") {
+								$(document).Toasts("create", {
+									class: "bg-danger",
+									title: "Error queuing Top Add",
+									body:
+										"There was an error queuing a Top Add. Your DJ Controls might not allow you to do this when you are not on the air. If this is not the case, please contact the engineer.",
+									autoHide: true,
+									delay: 15000,
+									icon: "fas fa-skull-crossbones fa-lg",
+								});
+								if (typeof cb === "function") {
+									cb(false);
+								}
+							} else {
+								$(document).Toasts("create", {
+									class: "bg-success",
+									title: "Top Add Queued",
+									autohide: true,
+									delay: 5000,
+									body: `Top Add was added to the queue`,
+								});
+								if (typeof cb === "function") {
+									cb(true);
+								}
 							}
 						}
-					}
-				);
+					);
 			});
 		} catch (e) {
 			$(document).Toasts("create", {
@@ -353,37 +385,39 @@ class WWSUstate extends WWSUevents {
 	 */
 	queueLiner(data, cb) {
 		try {
-			this.hosts.promptIfNotHost(`play a liner`, () => {
-				this.requests.host.request(
-					{ method: "post", url: this.endpoints.liner, data },
-					(response) => {
-						if (response !== "OK") {
-							$(document).Toasts("create", {
-								class: "bg-danger",
-								title: "Error queuing liner",
-								body:
-									"There was an error queuing a liner. Your DJ Controls might not allow you to do this when you are not on the air. If this is not the case, please contact the engineer.",
-								autoHide: true,
-								delay: 15000,
-								icon: "fas fa-skull-crossbones fa-lg",
-							});
-							if (typeof cb === "function") {
-								cb(false);
-							}
-						} else {
-							$(document).Toasts("create", {
-								class: "bg-success",
-								title: "Liner Queued",
-								autohide: true,
-								delay: 5000,
-								body: `Liner was added to the queue`,
-							});
-							if (typeof cb === "function") {
-								cb(true);
+			this.manager.get("WWSUhosts").promptIfNotHost(`play a liner`, () => {
+				this.manager
+					.get("hostReq")
+					.request(
+						{ method: "post", url: this.endpoints.liner, data },
+						(response) => {
+							if (response !== "OK") {
+								$(document).Toasts("create", {
+									class: "bg-danger",
+									title: "Error queuing liner",
+									body:
+										"There was an error queuing a liner. Your DJ Controls might not allow you to do this when you are not on the air. If this is not the case, please contact the engineer.",
+									autoHide: true,
+									delay: 15000,
+									icon: "fas fa-skull-crossbones fa-lg",
+								});
+								if (typeof cb === "function") {
+									cb(false);
+								}
+							} else {
+								$(document).Toasts("create", {
+									class: "bg-success",
+									title: "Liner Queued",
+									autohide: true,
+									delay: 5000,
+									body: `Liner was added to the queue`,
+								});
+								if (typeof cb === "function") {
+									cb(true);
+								}
 							}
 						}
-					}
-				);
+					);
 			});
 		} catch (e) {
 			$(document).Toasts("create", {
@@ -410,38 +444,42 @@ class WWSUstate extends WWSUevents {
 	 */
 	dump(data, cb) {
 		try {
-			this.hosts.promptIfNotHost(`dump audio on the delay system`, () => {
-				this.requests.host.request(
-					{ method: "post", url: this.endpoints.dump, data },
-					(response) => {
-						if (response !== "OK") {
-							$(document).Toasts("create", {
-								class: "bg-danger",
-								title: "Error dumping",
-								body:
-									"There was an error triggering the dump on the delay system. Your DJ Controls might not allow you to do this when you are not on the air. If this is not the case, please contact the engineer.",
-								autoHide: true,
-								delay: 15000,
-								icon: "fas fa-skull-crossbones fa-lg",
-							});
-							if (typeof cb === "function") {
-								cb(false);
+			this.manager
+				.get("WWSUhosts")
+				.promptIfNotHost(`dump audio on the delay system`, () => {
+					this.manager
+						.get("hostReq")
+						.request(
+							{ method: "post", url: this.endpoints.dump, data },
+							(response) => {
+								if (response !== "OK") {
+									$(document).Toasts("create", {
+										class: "bg-danger",
+										title: "Error dumping",
+										body:
+											"There was an error triggering the dump on the delay system. Your DJ Controls might not allow you to do this when you are not on the air. If this is not the case, please contact the engineer.",
+										autoHide: true,
+										delay: 15000,
+										icon: "fas fa-skull-crossbones fa-lg",
+									});
+									if (typeof cb === "function") {
+										cb(false);
+									}
+								} else {
+									$(document).Toasts("create", {
+										class: "bg-success",
+										title: "Dump command sent",
+										autohide: true,
+										delay: 10000,
+										body: `Dump command was sent to the delay system. If successful, the number of seconds on the dump button will go down shortly.`,
+									});
+									if (typeof cb === "function") {
+										cb(true);
+									}
+								}
 							}
-						} else {
-							$(document).Toasts("create", {
-								class: "bg-success",
-								title: "Dump command sent",
-								autohide: true,
-								delay: 10000,
-								body: `Dump command was sent to the delay system. If successful, the number of seconds on the dump button will go down shortly.`,
-							});
-							if (typeof cb === "function") {
-								cb(true);
-							}
-						}
-					}
-				);
-			});
+						);
+				});
 		} catch (e) {
 			$(document).Toasts("create", {
 				class: "bg-danger",
@@ -463,7 +501,7 @@ class WWSUstate extends WWSUevents {
 	 * Show a form for starting a live in-studio show in a modal via Alpaca.
 	 */
 	showLiveForm() {
-		if (this.hosts.client.lockToDJ !== null) {
+		if (this.manager.get("WWSUhosts").client.lockToDJ !== null) {
 			$(document).Toasts("create", {
 				class: "bg-warning",
 				title: "Action not allowed",
@@ -474,171 +512,165 @@ class WWSUstate extends WWSUevents {
 			return;
 		}
 
-		this.hosts.promptIfNotHost(`start a live in-studio broadcast`, () => {
-			this.broadcastModal.title = `Start Live (in-studio) Broadcast`;
-			this.broadcastModal.body = ``;
-			this.broadcastModal.iziModal("open");
+		this.broadcastModal.title = `Start Live (in-studio) Broadcast`;
+		this.broadcastModal.body = ``;
+		this.broadcastModal.iziModal("open");
 
-			let whatShouldBePlaying = this.calendar
-				.whatShouldBePlaying()
-				.sort((a, b) => b.priority - a.priority);
-			whatShouldBePlaying = whatShouldBePlaying.find(
-				(record) => record.type === "show"
-			);
+		let whatShouldBePlaying = this.manager
+			.get("WWSUcalendar")
+			.whatShouldBePlaying()
+			.sort((a, b) => b.priority - a.priority);
+		whatShouldBePlaying = whatShouldBePlaying.find(
+			(record) => record.type === "show"
+		);
 
-			$(this.broadcastModal.body).alpaca({
-				schema: {
-					title: "Start Live (in-studio) Broadcast",
-					type: "object",
-					properties: {
-						acknowledge: {
-							type: "boolean",
-							default: false,
-							title: "I read the announcements",
+		$(this.broadcastModal.body).alpaca({
+			schema: {
+				title: "Start Live (in-studio) Broadcast",
+				type: "object",
+				properties: {
+					acknowledge: {
+						type: "boolean",
+						default: false,
+						title: "I read the announcements",
+					},
+					djs: {
+						type: "string",
+						required: true,
+						title: "DJ handles",
+						maxLength: 256,
+					},
+					name: {
+						type: "string",
+						title: "Name of Show",
+						required: true,
+						maxLength: 256,
+					},
+					topic: {
+						type: "string",
+						title: "Episode Topic / Description",
+						maxLength: 256,
+					},
+				},
+			},
+			options: {
+				fields: {
+					djs: {
+						helper: `Each DJ handle should be separated with a "; " (semicolon-space) if providing multiple DJs.`,
+						validator: function (callback) {
+							let value = this.getValue();
+							if (value.includes(" -")) {
+								callback({
+									status: false,
+									message: `Invalid; DJ handles may not contain " - " as this is a separation used by the system.`,
+								});
+								return;
+							}
+							if (!whatShouldBePlaying || whatShouldBePlaying.hosts !== value) {
+								callback({
+									status: true,
+									message: `Not on the immediate schedule (proceeding could result in the show being flagged as unauthorized)`,
+								});
+								return;
+							}
+							callback({
+								status: true,
+							});
 						},
-						djs: {
-							type: "string",
-							required: true,
-							title: "DJ handles",
-							maxLength: 255,
+					},
+					name: {
+						validator: function (callback) {
+							let value = this.getValue();
+							if (value.includes(" -")) {
+								callback({
+									status: false,
+									message: `Invalid; Show names may not contain " - " as this is a separation used by the system.`,
+								});
+								return;
+							}
+							if (!whatShouldBePlaying || whatShouldBePlaying.name !== value) {
+								callback({
+									status: true,
+									message: `Not on the immediate schedule (proceeding could result in the show being flagged as unauthorized)`,
+								});
+								return;
+							}
+							callback({
+								status: true,
+							});
 						},
-						name: {
-							type: "string",
-							title: "Name of Show",
-							required: true,
-							maxLength: 255,
-						},
-						topic: {
-							type: "string",
-							title: "Episode Topic / Description",
-							maxLength: 255,
-						},
-						webchat: {
-							type: "boolean",
-							default: true,
-							title: "Allow Listeners to Send Messages?",
+					},
+					topic: {
+						helper:
+							"Limit: 256 characters. The topic will be displayed on the website and display signs. It will also be posted in the WWSU Discord.",
+						type: "textarea",
+						placeholder: whatShouldBePlaying
+							? whatShouldBePlaying.description
+							: "",
+					},
+					acknowledge: {
+						rightLabel: "Yes",
+						helper:
+							"Please check this box to indicate you read the announcements on the announcements tab of DJ Controls.",
+						validator: function (callback) {
+							let value = this.getValue();
+							if (!value) {
+								callback({
+									status: false,
+									message: `You must acknowledge that you read the announcements on the announcements tab of DJ Controls before doing a broadcast.`,
+								});
+								return;
+							}
+							callback({
+								status: true,
+							});
 						},
 					},
 				},
-				options: {
-					fields: {
-						djs: {
-							helper: `Each DJ handle should be separated with a "; " (semicolon-space) if providing multiple DJs.`,
-							validator: function (callback) {
-								var value = this.getValue();
-								if (value.includes(" -")) {
-									callback({
-										status: false,
-										message: `Invalid; DJ handles may not contain " - " as this is a separation used by the system.`,
-									});
+				form: {
+					buttons: {
+						submit: {
+							title: "Start Broadcast",
+							click: (form, e) => {
+								form.refreshValidationState(true);
+								if (!form.isValid(true)) {
+									form.focus();
 									return;
 								}
-								if (
-									!whatShouldBePlaying ||
-									whatShouldBePlaying.hosts !== value
-								) {
-									callback({
-										status: true,
-										message: `Not on the immediate schedule (proceeding could result in the show being flagged as unauthorized)`,
-									});
-									return;
-								}
-								callback({
-									status: true,
-								});
-							},
-						},
-						name: {
-							validator: function (callback) {
-								var value = this.getValue();
-								if (value.includes(" -")) {
-									callback({
-										status: false,
-										message: `Invalid; Show names may not contain " - " as this is a separation used by the system.`,
-									});
-									return;
-								}
-								if (
-									!whatShouldBePlaying ||
-									whatShouldBePlaying.name !== value
-								) {
-									callback({
-										status: true,
-										message: `Not on the immediate schedule (proceeding could result in the show being flagged as unauthorized)`,
-									});
-									return;
-								}
-								callback({
-									status: true,
-								});
-							},
-						},
-						topic: {
-							helper:
-								"Limit: 256 characters. The topic will be displayed on the website and display signs.",
-							type: "textarea",
-							placeholder: whatShouldBePlaying
-								? whatShouldBePlaying.description
-								: "",
-						},
-						webchat: {
-							rightLabel: "Yes",
-							helper:
-								"You can mute/ban individual listeners from the chat if they send threatening or harassing messages.",
-						},
-						acknowledge: {
-							rightLabel: "Yes",
-							helper:
-								"Please check this box to indicate you read the announcements on the announcements tab of DJ Controls.",
-							validator: function (callback) {
-								var value = this.getValue();
-								if (!value) {
-									callback({
-										status: false,
-										message: `You must acknowledge that you read the announcements on the announcements tab of DJ Controls before doing a broadcast.`,
-									});
-									return;
-								}
-								callback({
-									status: true,
-								});
-							},
-						},
-					},
-					form: {
-						buttons: {
-							submit: {
-								title: "Start Broadcast",
-								click: (form, e) => {
-									form.refreshValidationState(true);
-									if (!form.isValid(true)) {
-										form.focus();
-										return;
+								let value = form.getValue();
+
+								value = {
+									topic: value.topic,
+									showname: `${value.djs} - ${value.name}`
+								};
+
+								this.goLive(value, (success) => {
+									if (success) {
+										this.broadcastModal.iziModal("close");
 									}
-									var value = form.getValue();
-
-									value = {
-										topic: value.topic,
-										showname: `${value.djs} - ${value.name}`,
-										webchat: value.webchat,
-									};
-
-									this.goLive(value, (success) => {
-										if (success) {
-											this.broadcastModal.iziModal("close");
-										}
-									});
-								},
+								});
 							},
 						},
 					},
 				},
-				data: {
-					djs: whatShouldBePlaying ? whatShouldBePlaying.hosts : "",
-					name: whatShouldBePlaying ? whatShouldBePlaying.name : "",
-					topic: whatShouldBePlaying ? whatShouldBePlaying.description : "",
-				},
-			});
+			},
+			data: {
+				djs: whatShouldBePlaying
+					? this.manager
+							.get("WWSUutil")
+							.truncateText(whatShouldBePlaying.hosts, 256)
+					: "",
+				name: whatShouldBePlaying
+					? this.manager
+							.get("WWSUutil")
+							.truncateText(whatShouldBePlaying.name, 256)
+					: "",
+				topic: whatShouldBePlaying
+					? this.manager
+							.get("WWSUutil")
+							.truncateText(whatShouldBePlaying.description, 256)
+					: "",
+			},
 		});
 	}
 
@@ -650,31 +682,35 @@ class WWSUstate extends WWSUevents {
 	 */
 	goLive(data, cb) {
 		try {
-			this.hosts.promptIfNotHost(`start a live in-studio broadcast`, () => {
-				this.requests.host.request(
-					{ method: "post", url: this.endpoints.live, data },
-					(response) => {
-						if (response !== "OK") {
-							$(document).Toasts("create", {
-								class: "bg-danger",
-								title: "Error starting live broadcast",
-								body:
-									"There was an error starting the live broadcast. Live broadcasts may only be started from the WWSU studio (otherwise, you must do a remote broadcast). If you are in the WWSU studio, please contact the engineer.",
-								autoHide: true,
-								delay: 15000,
-								icon: "fas fa-skull-crossbones fa-lg",
-							});
-							if (typeof cb === "function") {
-								cb(false);
+			this.manager
+				.get("WWSUhosts")
+				.promptIfNotHost(`start a live in-studio broadcast`, () => {
+					this.manager
+						.get("hostReq")
+						.request(
+							{ method: "post", url: this.endpoints.live, data },
+							(response) => {
+								if (response !== "OK") {
+									$(document).Toasts("create", {
+										class: "bg-danger",
+										title: "Error starting live broadcast",
+										body:
+											"There was an error starting the live broadcast. Live broadcasts may only be started from the WWSU studio (otherwise, you must do a remote broadcast). If you are in the WWSU studio, please contact the engineer.",
+										autoHide: true,
+										delay: 15000,
+										icon: "fas fa-skull-crossbones fa-lg",
+									});
+									if (typeof cb === "function") {
+										cb(false);
+									}
+								} else {
+									if (typeof cb === "function") {
+										cb(true);
+									}
+								}
 							}
-						} else {
-							if (typeof cb === "function") {
-								cb(true);
-							}
-						}
-					}
-				);
-			});
+						);
+				});
 		} catch (e) {
 			$(document).Toasts("create", {
 				class: "bg-danger",
@@ -697,7 +733,7 @@ class WWSUstate extends WWSUevents {
 	 */
 	showRemoteForm() {
 		// Reject if host does not have makeCalls permission
-		if (!this.hosts.client.makeCalls) {
+		if (!this.manager.get("WWSUhosts").client.makeCalls) {
 			$(document).Toasts("create", {
 				class: "bg-warning",
 				title: "Remote broadcasts not allowed",
@@ -709,7 +745,8 @@ class WWSUstate extends WWSUevents {
 		}
 
 		// Find what should be airing right now; filter to only the highest priority remote broadcast
-		let whatShouldBePlaying = this.calendar
+		let whatShouldBePlaying = this.manager
+			.get("WWSUcalendar")
 			.whatShouldBePlaying()
 			.sort((a, b) => b.priority - a.priority);
 		whatShouldBePlaying = whatShouldBePlaying.find(
@@ -717,7 +754,10 @@ class WWSUstate extends WWSUevents {
 		);
 
 		// Reject if no remote broadcasts scheduled and this host is locked to a DJ.
-		if (this.hosts.client.lockToDJ !== null && !whatShouldBePlaying) {
+		if (
+			this.manager.get("WWSUhosts").client.lockToDJ !== null &&
+			!whatShouldBePlaying
+		) {
 			$(document).Toasts("create", {
 				class: "bg-warning",
 				title: "No remote broadcasts scheduled",
@@ -730,14 +770,14 @@ class WWSUstate extends WWSUevents {
 
 		// Reject if the DJ locked to this host is not part of the currently scheduled remote broadcast
 		if (
-			this.hosts.client.lockToDJ !== null &&
+			this.manager.get("WWSUhosts").client.lockToDJ !== null &&
 			whatShouldBePlaying &&
 			[
 				whatShouldBePlaying.hostDJ,
 				whatShouldBePlaying.cohostDJ1,
 				whatShouldBePlaying.cohostDJ2,
 				whatShouldBePlaying.cohostDJ3,
-			].indexOf(this.hosts.client.lockToDJ) === -1
+			].indexOf(this.manager.get("WWSUhosts").client.lockToDJ) === -1
 		) {
 			$(document).Toasts("create", {
 				class: "bg-warning",
@@ -749,234 +789,234 @@ class WWSUstate extends WWSUevents {
 			return;
 		}
 
-		this.hosts.promptIfNotHost(`start a remote broadcast`, () => {
-			this.broadcastModal.title = `Start Remote Broadcast`;
-			this.broadcastModal.body = ``;
-			this.broadcastModal.iziModal("open");
+		this.broadcastModal.title = `Start Remote Broadcast`;
+		this.broadcastModal.body = ``;
+		this.broadcastModal.iziModal("open");
 
-			// Set lock to DJ to a local variable as Alpaca's validators do not use arrow functions
-			let lockToDJ = this.hosts.client.lockToDJ;
+		// Set lock to DJ to a local letiable as Alpaca's validators do not use arrow functions
+		let lockToDJ = this.manager.get("WWSUhosts").client.lockToDJ;
 
-			// Get the hosts that may be called for an audio broadcast
-			let callableHosts = this.hosts.find({
-				answerCalls: true,
-				authorized: true,
-			});
+		// Get the hosts that may be called for an audio broadcast
+		let callableHosts = this.manager.get("WWSUrecipients").find({
+			answerCalls: true,
+			status: 5,
+		});
 
-			$(this.broadcastModal.body).alpaca({
-				schema: {
-					title: "Start Remote Broadcast",
-					type: "object",
-					properties: {
-						audioAcknowledgement: {
-							type: "boolean",
-							default: false,
-							title: "Settings in Audio menu are correct",
-						},
-						acknowledge: {
-							type: "boolean",
-							default: false,
-							title: "I read the announcements",
-						},
-						hostCall: {
-							type: "number",
-							enum: callableHosts.map((host) => host.ID),
-							required: true,
-							title: "Host to call",
-						},
-						djs: {
-							type: "string",
-							required: true,
-							readonly: this.hosts.client.lockToDJ !== null,
-							title: "DJ handles",
-							maxLength: 255,
-						},
-						name: {
-							type: "string",
-							title: "Name of Show",
-							readonly: this.hosts.client.lockToDJ !== null,
-							required: true,
-							maxLength: 255,
-						},
-						topic: {
-							type: "string",
-							title: "Episode Topic / Description",
-							maxLength: 255,
-						},
-						webchat: {
-							type: "boolean",
-							default: true,
-							title: "Allow Listeners to Send Messages?",
-						},
+		$(this.broadcastModal.body).alpaca({
+			schema: {
+				title: "Start Remote Broadcast",
+				type: "object",
+				properties: {
+					audioAcknowledgement: {
+						type: "boolean",
+						default: false,
+						title: "Settings in Audio menu are correct",
+					},
+					acknowledge: {
+						type: "boolean",
+						default: false,
+						title: "I read the announcements",
+					},
+					hostCall: {
+						type: "number",
+						enum: callableHosts.map((host) => host.hostID),
+						required: true,
+						title: "Host to call",
+					},
+					djs: {
+						type: "string",
+						required: true,
+						readonly: this.manager.get("WWSUhosts").client.lockToDJ !== null,
+						title: "DJ handles",
+						maxLength: 256,
+					},
+					name: {
+						type: "string",
+						title: "Name of Show",
+						readonly: this.manager.get("WWSUhosts").client.lockToDJ !== null,
+						required: true,
+						maxLength: 256,
+					},
+					topic: {
+						type: "string",
+						title: "Episode Topic / Description",
+						maxLength: 256,
 					},
 				},
-				options: {
-					fields: {
-						audioAcknowledgement: {
-							rightLabel: "Yes",
-							helper:
-								"Check this box to indicate you went into the Audio menu of DJ Controls and confirmed the devices and volumes you want for the remote broadcast are correct.",
-							validator: function (callback) {
-								var value = this.getValue();
-								if (!value) {
-									callback({
-										status: false,
-										message: `You must acknowledge that you ensured the settings in the Audio menu are correct.`,
-									});
-									return;
-								}
+			},
+			options: {
+				fields: {
+					audioAcknowledgement: {
+						rightLabel: "Yes",
+						helper: `You confirm you went into the Audio page of DJ Controls and ensured the devices you want broadcast have "Remote Broadcasts" checked, their volumes are set to where you want them, and you tested (via the VU meters) to ensure DJ Controls is receiving audio from those devices.`,
+						validator: function (callback) {
+							let value = this.getValue();
+							if (!value) {
 								callback({
-									status: true,
+									status: false,
+									message: `You must acknowledge that you checked the Audio settings and ensured everything is set correctly and working.`,
 								});
-							},
-						},
-						acknowledge: {
-							rightLabel: "Yes",
-							helper:
-								"Please check this box to indicate you read the announcements on the announcements tab of DJ Controls.",
-							validator: function (callback) {
-								var value = this.getValue();
-								if (!value) {
-									callback({
-										status: false,
-										message: `You must acknowledge that you read the announcements on the announcements tab of DJ Controls before doing a broadcast.`,
-									});
-									return;
-								}
-								callback({
-									status: true,
-								});
-							},
-						},
-						djs: {
-							helper: `Each DJ handle should be separated with a "; " (semicolon-space) if providing multiple DJs.`,
-							validator: function (callback) {
-								var value = this.getValue();
-								if (value.includes(" -")) {
-									callback({
-										status: false,
-										message: `Invalid; DJ handles may not contain " - " as this is a separation used by the system.`,
-									});
-									return;
-								}
-								if (
-									!whatShouldBePlaying ||
-									whatShouldBePlaying.hosts !== value
-								) {
-									callback({
-										status: true,
-										message: `Not on the immediate schedule (proceeding could result in the show being flagged as unauthorized)`,
-									});
-									return;
-								} else if (whatShouldBePlaying && lockToDJ) {
-									callback({
-										status: true,
-										message: `This field cannot be edited; this is the only broadcast you are allowed to start from this host at this time.`,
-									});
-									return;
-								}
-								callback({
-									status: true,
-								});
-							},
-						},
-						name: {
-							validator: function (callback) {
-								var value = this.getValue();
-								if (value.includes(" -")) {
-									callback({
-										status: false,
-										message: `Invalid; Show names may not contain " - " as this is a separation used by the system.`,
-									});
-									return;
-								}
-								if (
-									!whatShouldBePlaying ||
-									whatShouldBePlaying.name !== value
-								) {
-									callback({
-										status: true,
-										message: `Not on the immediate schedule (proceeding could result in the show being flagged as unauthorized)`,
-									});
-									return;
-								} else if (whatShouldBePlaying && lockToDJ) {
-									callback({
-										status: true,
-										message: `This field cannot be edited; this is the only broadcast you are allowed to start from this host at this time.`,
-									});
-									return;
-								}
-								callback({
-									status: true,
-								});
-							},
-						},
-						topic: {
-							helper:
-								"Limit: 256 characters. The topic will be displayed on the website and display signs.",
-							type: "textarea",
-							placeholder: whatShouldBePlaying
-								? whatShouldBePlaying.description
-								: "",
-						},
-						webchat: {
-							rightLabel: "Yes",
-							helper:
-								"You can mute/ban individual listeners from the chat if they send threatening or harassing messages.",
-						},
-						hostCall: {
-							type: "select",
-							optionLabels: callableHosts.map((host) => host.friendlyname),
-							helper:
-								"Choose which host you want to establish an audio call with for the broadcast",
+								return;
+							}
+							callback({
+								status: true,
+							});
 						},
 					},
-					form: {
-						buttons: {
-							submit: {
-								title: "Start Broadcast",
-								click: (form, e) => {
-									form.refreshValidationState(true);
-									if (!form.isValid(true)) {
-										form.focus();
-										return;
-									}
-									var value = form.getValue();
+					acknowledge: {
+						rightLabel: "Yes",
+						helper:
+							"Please check this box to indicate you read the announcements on the announcements tab of DJ Controls. Important information regarding DJs, shows/broadcasts, or WWSU might be posted here.",
+						validator: function (callback) {
+							let value = this.getValue();
+							if (!value) {
+								callback({
+									status: false,
+									message: `You must acknowledge that you read the announcements on the announcements tab of DJ Controls.`,
+								});
+								return;
+							}
+							callback({
+								status: true,
+							});
+						},
+					},
+					djs: {
+						helpers: [
+							`Each DJ handle should be separated with a "; " (semicolon-space) if providing multiple DJs.`,
+							`If this field is uneditable but incorrect, please contact a director ASAP.`,
+						],
+						validator: function (callback) {
+							let value = this.getValue();
+							if (value.includes(" -")) {
+								callback({
+									status: false,
+									message: `Invalid; DJ handles may not contain " - " as this is a separation used by the system.`,
+								});
+								return;
+							}
+							if (!whatShouldBePlaying || whatShouldBePlaying.hosts !== value) {
+								callback({
+									status: true,
+									message: `Not on the immediate schedule (proceeding could result in the show being flagged as unauthorized)`,
+								});
+								return;
+							} else if (whatShouldBePlaying && lockToDJ) {
+								callback({
+									status: true,
+									message: `This field cannot be edited; this is the only broadcast you are allowed to start from this host at this time.`,
+								});
+								return;
+							}
+							callback({
+								status: true,
+							});
+						},
+					},
+					name: {
+						helper: `If this field is uneditable but incorrect, please contact a director ASAP.`,
+						validator: function (callback) {
+							let value = this.getValue();
+							if (value.includes(" -")) {
+								callback({
+									status: false,
+									message: `Invalid; Show names may not contain " - " as this is a separation used by the system.`,
+								});
+								return;
+							}
+							if (!whatShouldBePlaying || whatShouldBePlaying.name !== value) {
+								callback({
+									status: true,
+									message: `Not on the immediate schedule (proceeding could result in the show being flagged as unauthorized)`,
+								});
+								return;
+							} else if (whatShouldBePlaying && lockToDJ) {
+								callback({
+									status: true,
+									message: `This field cannot be edited; this is the only broadcast you are allowed to start from this host at this time.`,
+								});
+								return;
+							}
+							callback({
+								status: true,
+							});
+						},
+					},
+					topic: {
+						helper:
+							"Limit: 256 characters. The topic will be displayed on the website and display signs. It will also be posted in the WWSU Discord.",
+						type: "textarea",
+						placeholder: whatShouldBePlaying
+							? whatShouldBePlaying.description
+							: "",
+					},
+					hostCall: {
+						type: "select",
+						optionLabels: callableHosts.map((host) => host.label),
+						helper:
+							"Choose which host you want to establish an audio call with for the broadcast. Please contact a director for guidance or choose the first one (unless that one does not work).",
+					},
+				},
+				form: {
+					buttons: {
+						submit: {
+							title: "Start Broadcast",
+							click: (form, e) => {
+								form.refreshValidationState(true);
+								if (!form.isValid(true)) {
+									form.focus();
+									return;
+								}
+								let value = form.getValue();
 
-									// The process of going remote requires a lot of back and forth between processes and the API.
-									// So, store the form data in memory and block the form while we are processing.
-									// Then, once an audio call is established, this.goRemote() should be called.
+								// The process of going remote requires a lot of back and forth between processes and the API.
+								// So, store the form data in memory and block the form while we are processing.
+								// Then, once an audio call is established, this.goRemote() should be called.
 
-									this.pendingRemote = {
-										fn: "goRemote",
-										data: {
-											topic: value.topic,
-											showname: `${value.djs} - ${value.name}`,
-											webchat: value.webchat,
-											host: value.hostCall,
-										},
-									};
+								this.pendingRemote = {
+									fn: "goRemote",
+									data: {
+										topic: value.topic,
+										showname: `${value.djs} - ${value.name}`,
+										host: value.hostCall,
+									},
+								};
 
-									$(this.broadcastModal.body).block({
-										message: `<h1>Starting Remote Broadcast...</h1>`,
-										css: { border: "3px solid #a00" },
-										timeout: 15000,
-										onBlock: () => {
-											// You should listen for this event and start the process of remote audio calling when called.
-											this.emitEvent("startRemote", [value.hostCall]);
-										},
+								this.manager
+									.get("WWSUhosts")
+									.promptIfNotHost(`start a remote broadcast`, () => {
+										$(this.broadcastModal.body).block({
+											message: `<h1>Please wait...</h1><p class="remote-start-status">Initializing...</p>`,
+											css: { border: "3px solid #a00" },
+											timeout: 30000,
+											onBlock: () => {
+												// You should listen for this event and start the process of remote audio calling when called.
+												this.emitEvent("startRemote", [value.hostCall]);
+											},
+										});
 									});
-								},
 							},
 						},
 					},
 				},
-				data: {
-					djs: whatShouldBePlaying ? whatShouldBePlaying.hosts : "",
-					name: whatShouldBePlaying ? whatShouldBePlaying.name : "",
-					topic: whatShouldBePlaying ? whatShouldBePlaying.description : "",
-				},
-			});
+			},
+			data: {
+				djs: whatShouldBePlaying
+					? this.manager
+							.get("WWSUutil")
+							.truncateText(whatShouldBePlaying.hosts, 256)
+					: "",
+				name: whatShouldBePlaying
+					? this.manager
+							.get("WWSUutil")
+							.truncateText(whatShouldBePlaying.name, 256)
+					: "",
+				topic: whatShouldBePlaying
+					? this.manager
+							.get("WWSUutil")
+							.truncateText(whatShouldBePlaying.description, 256)
+					: "",
+			},
 		});
 	}
 
@@ -1009,8 +1049,9 @@ class WWSUstate extends WWSUevents {
 	 */
 	goRemote(data, cb) {
 		try {
-			this.hosts.promptIfNotHost(`start a remote broadcast`, () => {
-				this.requests.host.request(
+			this.manager
+				.get("hostReq")
+				.request(
 					{ method: "post", url: this.endpoints.remote, data },
 					(response) => {
 						if (response !== "OK") {
@@ -1033,13 +1074,472 @@ class WWSUstate extends WWSUevents {
 						}
 					}
 				);
-			});
 		} catch (e) {
 			$(document).Toasts("create", {
 				class: "bg-danger",
 				title: "Error starting remote broadcast",
 				body:
 					"There was an error starting the remote broadcast. Please contact the engineer if you think you should be allowed to start a remote broadcast.",
+				autoHide: true,
+				delay: 15000,
+				icon: "fas fa-skull-crossbones fa-lg",
+			});
+			if (typeof cb === "function") {
+				cb(false);
+			}
+			console.error(e);
+		}
+	}
+
+	/**
+	 * Show a form for starting a live in-studio sports broadcast in a modal via Alpaca.
+	 */
+	showSportsForm() {
+		if (this.manager.get("WWSUhosts").client.lockToDJ !== null) {
+			$(document).Toasts("create", {
+				class: "bg-warning",
+				title: "Action not allowed",
+				delay: 20000,
+				autohide: true,
+				body: `You are not allowed to start a live (in-studio) broadcast from this host. Please contact a director if you think this is an error.`,
+			});
+			return;
+		}
+
+		this.broadcastModal.title = `Start Live (in-studio) Sports Broadcast`;
+		this.broadcastModal.body = ``;
+		this.broadcastModal.iziModal("open");
+
+		let whatShouldBePlaying = this.manager
+			.get("WWSUcalendar")
+			.whatShouldBePlaying()
+			.sort((a, b) => b.priority - a.priority);
+		whatShouldBePlaying = whatShouldBePlaying.find(
+			(record) => record.type === "sports"
+		);
+		let title = whatShouldBePlaying
+			? whatShouldBePlaying.name.split(" vs.")[0]
+			: undefined;
+
+		let _sports = this.manager.get("WWSUconfig").config.sports;
+
+		$(this.broadcastModal.body).alpaca({
+			schema: {
+				title: "Start Live (in-studio) Sports Broadcast",
+				type: "object",
+				properties: {
+					acknowledge: {
+						type: "boolean",
+						default: false,
+						title: "I read the announcements",
+					},
+					sport: {
+						type: "string",
+						title: "Sport",
+						enum: _sports,
+						required: true,
+					},
+					topic: {
+						type: "string",
+						title: "Broadcast Description",
+						maxLength: 256,
+					},
+				},
+			},
+			options: {
+				fields: {
+					acknowledge: {
+						rightLabel: "Yes",
+						helper:
+							"Please check this box to indicate you read the announcements on the announcements tab of DJ Controls.",
+						validator: function (callback) {
+							let value = this.getValue();
+							if (!value) {
+								callback({
+									status: false,
+									message: `You must acknowledge that you read the announcements on the announcements tab of DJ Controls before doing a broadcast.`,
+								});
+								return;
+							}
+							callback({
+								status: true,
+							});
+						},
+					},
+					sport: {
+						type: "select",
+						validator: function (callback) {
+							let value = this.getValue();
+							if (!title || title !== value) {
+								callback({
+									status: true,
+									message: `Not on the immediate schedule (proceeding could result in the broadcast being flagged as unauthorized)`,
+								});
+								return;
+							}
+							callback({
+								status: true,
+							});
+						},
+					},
+					topic: {
+						helper:
+							"Limit: 256 characters. The topic will be displayed on the website and display signs. It will also be posted in the WWSU Discord.",
+						type: "textarea",
+					},
+				},
+				form: {
+					buttons: {
+						submit: {
+							title: "Start Broadcast",
+							click: (form, e) => {
+								form.refreshValidationState(true);
+								if (!form.isValid(true)) {
+									form.focus();
+									return;
+								}
+								let value = form.getValue();
+
+								value = {
+									topic: value.topic,
+									sport: value.sport,
+								};
+
+								this.goSports(value, (success) => {
+									if (success) {
+										this.broadcastModal.iziModal("close");
+									}
+								});
+							},
+						},
+					},
+				},
+			},
+			data: {
+				sport: title ? title : "",
+				topic: whatShouldBePlaying
+					? this.manager
+							.get("WWSUutil")
+							.truncateText(whatShouldBePlaying.description, 256)
+					: "",
+			},
+		});
+	}
+
+	/**
+	 * Tell the WWSU API to start a sports broadcast.
+	 *
+	 * @param {object} data Data to send to the endpoint
+	 * @param {?function} cb Callback executed when the request is completed
+	 */
+	goSports(data, cb) {
+		try {
+			this.manager
+				.get("WWSUhosts")
+				.promptIfNotHost(`start a live in-studio sports broadcast`, () => {
+					this.manager
+						.get("hostReq")
+						.request(
+							{ method: "post", url: this.endpoints.sports, data },
+							(response) => {
+								if (response !== "OK") {
+									$(document).Toasts("create", {
+										class: "bg-danger",
+										title: "Error starting live sports broadcast",
+										body:
+											"There was an error starting the live sports broadcast. Live sports broadcasts may only be started from the WWSU studio (otherwise, you must do a remote sports broadcast). If you are in the WWSU studio, please contact the engineer.",
+										autoHide: true,
+										delay: 15000,
+										icon: "fas fa-skull-crossbones fa-lg",
+									});
+									if (typeof cb === "function") {
+										cb(false);
+									}
+								} else {
+									if (typeof cb === "function") {
+										cb(true);
+									}
+								}
+							}
+						);
+				});
+		} catch (e) {
+			$(document).Toasts("create", {
+				class: "bg-danger",
+				title: "Error starting live sports broadcast",
+				body:
+					"There was an error starting the live sports broadcast. Please report this to the engineer.",
+				autoHide: true,
+				delay: 10000,
+				icon: "fas fa-skull-crossbones fa-lg",
+			});
+			if (typeof cb === "function") {
+				cb(false);
+			}
+			console.error(e);
+		}
+	}
+
+	/**
+	 * Show a form for starting a remote sports broadcast in a modal via Alpaca.
+	 */
+	showSportsRemoteForm() {
+		// Reject if host does not have makeCalls permission
+		if (!this.manager.get("WWSUhosts").client.makeCalls) {
+			$(document).Toasts("create", {
+				class: "bg-warning",
+				title: "Remote broadcasts not allowed",
+				delay: 20000,
+				autohide: true,
+				body: `You are not allowed to start a remote broadcast from this host. Please contact a director if you think this is an error.`,
+			});
+			return;
+		}
+
+		// Find what should be airing right now; filter to only the highest priority sports broadcast
+		let whatShouldBePlaying = this.manager
+			.get("WWSUcalendar")
+			.whatShouldBePlaying()
+			.sort((a, b) => b.priority - a.priority);
+		whatShouldBePlaying = whatShouldBePlaying.find(
+			(record) => record.type === "sports"
+		);
+
+		// Set lock to DJ to a local letiable as Alpaca's validators do not use arrow functions
+		let lockToDJ = this.manager.get("WWSUhosts").client.lockToDJ;
+
+		// Reject if no remote broadcasts scheduled and this host is locked to a DJ.
+		if (
+			this.manager.get("WWSUhosts").client.lockToDJ !== null &&
+			!whatShouldBePlaying
+		) {
+			$(document).Toasts("create", {
+				class: "bg-warning",
+				title: "No sports broadcasts scheduled",
+				delay: 30000,
+				autohide: true,
+				body: `You are not allowed to start a remote sports broadcast from this host at this time; there are no broadcasts scheduled. Please wait until 5 minutes before start time and try again. Please contact a director if you think this is an error.`,
+			});
+			return;
+		}
+
+		// TODO: Add a flag in WWSU hosts allowing only certain hosts to start remote sports broadcasts, and run a check here.
+
+		this.broadcastModal.title = `Start Remote Sports Broadcast`;
+		this.broadcastModal.body = ``;
+		this.broadcastModal.iziModal("open");
+
+		let title = whatShouldBePlaying
+			? whatShouldBePlaying.name.split(" vs.")[0]
+			: undefined;
+
+		let _sports = this.manager.get("WWSUconfig").config.sports;
+
+		// Get the hosts that may be called for an audio broadcast
+		let callableHosts = this.manager.get("WWSUrecipients").find({
+			answerCalls: true,
+			status: 5,
+		});
+
+		$(this.broadcastModal.body).alpaca({
+			schema: {
+				title: "Start Remote Sports Broadcast",
+				type: "object",
+				properties: {
+					audioAcknowledgement: {
+						type: "boolean",
+						default: false,
+						title: "Settings in Audio menu are correct",
+					},
+					acknowledge: {
+						type: "boolean",
+						default: false,
+						title: "I read the announcements",
+					},
+					hostCall: {
+						type: "number",
+						enum: callableHosts.map((host) => host.hostID),
+						required: true,
+						title: "Host to call",
+					},
+					sport: {
+						type: "string",
+						title: "Sport",
+						enum: _sports,
+						required: true,
+						readonly: this.manager.get("WWSUhosts").client.lockToDJ !== null,
+					},
+					topic: {
+						type: "string",
+						title: "Broadcast Description",
+						maxLength: 256,
+					},
+				},
+			},
+			options: {
+				fields: {
+					audioAcknowledgement: {
+						rightLabel: "Yes",
+						helper: `You confirm you went into the Audio page of DJ Controls and ensured the devices you want broadcast have "Remote Broadcasts" checked, their volumes are set to where you want them, and you tested (via the VU meters) to ensure DJ Controls is receiving audio from those devices.`,
+						validator: function (callback) {
+							let value = this.getValue();
+							if (!value) {
+								callback({
+									status: false,
+									message: `You must acknowledge that you checked the Audio settings and ensured everything is set correctly and working.`,
+								});
+								return;
+							}
+							callback({
+								status: true,
+							});
+						},
+					},
+					acknowledge: {
+						rightLabel: "Yes",
+						helper:
+							"Please check this box to indicate you read the announcements on the announcements tab of DJ Controls.",
+						validator: function (callback) {
+							let value = this.getValue();
+							if (!value) {
+								callback({
+									status: false,
+									message: `You must acknowledge that you read the announcements on the announcements tab of DJ Controls before doing a broadcast.`,
+								});
+								return;
+							}
+							callback({
+								status: true,
+							});
+						},
+					},
+					hostCall: {
+						type: "select",
+						optionLabels: callableHosts.map((host) => host.label),
+						helper:
+							"Choose which host you want to establish an audio call with for the broadcast. Please contact a director for guidance or choose the first one (unless that one does not work).",
+					},
+					sport: {
+						type: "select",
+						validator: function (callback) {
+							let value = this.getValue();
+							if (!title || title !== value) {
+								callback({
+									status: true,
+									message: `Not on the immediate schedule (proceeding could result in the broadcast being flagged as unauthorized)`,
+								});
+								return;
+							} else if (whatShouldBePlaying && lockToDJ) {
+								callback({
+									status: true,
+									message: `This field cannot be edited; this is the only sports broadcast you are allowed to start from this host at this time.`,
+								});
+								return;
+							}
+							callback({
+								status: true,
+							});
+						},
+					},
+					topic: {
+						helper:
+							"Limit: 256 characters. The topic will be displayed on the website and display signs. It will also be posted in the WWSU Discord.",
+						type: "textarea",
+					},
+				},
+				form: {
+					buttons: {
+						submit: {
+							title: "Start Broadcast",
+							click: (form, e) => {
+								form.refreshValidationState(true);
+								if (!form.isValid(true)) {
+									form.focus();
+									return;
+								}
+								let value = form.getValue();
+
+								// The process of going remote requires a lot of back and forth between processes and the API.
+								// So, store the form data in memory and block the form while we are processing.
+								// Then, once an audio call is established, this.goRemote() should be called.
+
+								this.pendingRemote = {
+									fn: "goSportsRemote",
+									data: {
+										topic: value.topic,
+										sport: value.sport,
+										host: value.hostCall,
+									},
+								};
+
+								this.manager
+									.get("WWSUhosts")
+									.promptIfNotHost(`start a remote sports broadcast`, () => {
+										$(this.broadcastModal.body).block({
+											message: `<h1>Please wait...</h1><p class="remote-start-status">Initializing...</p>`,
+											css: { border: "3px solid #a00" },
+											timeout: 30000,
+											onBlock: () => {
+												// You should listen for this event and start the process of remote audio calling when called.
+												this.emitEvent("startRemote", [value.hostCall]);
+											},
+										});
+									});
+							},
+						},
+					},
+				},
+			},
+			data: {
+				sport: title ? title : "",
+				topic: whatShouldBePlaying
+					? this.manager
+							.get("WWSUutil")
+							.truncateText(whatShouldBePlaying.description, 256)
+					: "",
+			},
+		});
+	}
+
+	/**
+	 * Tell the WWSU API to start a remote sports broadcast.
+	 *
+	 * @param {object} data Data to send to the endpoint
+	 * @param {?function} cb Callback executed when the request is completed
+	 */
+	goSportsRemote(data, cb) {
+		try {
+			this.manager
+				.get("hostReq")
+				.request(
+					{ method: "post", url: this.endpoints.sportsRemote, data },
+					(response) => {
+						if (response !== "OK") {
+							$(document).Toasts("create", {
+								class: "bg-danger",
+								title: "Error starting remote sports broadcast",
+								body:
+									"There was an error starting the remote sports broadcast. Please contact the engineer if you think you should be allowed to start a remote sports broadcast.",
+								autoHide: true,
+								delay: 15000,
+								icon: "fas fa-skull-crossbones fa-lg",
+							});
+							if (typeof cb === "function") {
+								cb(false);
+							}
+						} else {
+							if (typeof cb === "function") {
+								cb(true);
+							}
+						}
+					}
+				);
+		} catch (e) {
+			$(document).Toasts("create", {
+				class: "bg-danger",
+				title: "Error starting remote sports broadcast",
+				body:
+					"There was an error starting the remote sports broadcast. Please contact the engineer if you think you should be allowed to start a remote sports broadcast.",
 				autoHide: true,
 				delay: 15000,
 				icon: "fas fa-skull-crossbones fa-lg",

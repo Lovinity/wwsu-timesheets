@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * This class implements remote broadcasting.
  * For the module that hits the WWSU API, use wwsu-remote/wwsu-remote (the WWSURemote class) instead.
@@ -13,15 +15,13 @@ class WWSUremoteaudio extends WWSUevents {
 	 *
 	 * @param {AudioContext} audioContext The audioContext to use (should use the one from wwsu-audio if possible)
 	 * @param {MediaStreamAudioDestinationNode} destination The destination node to use (should use the audioContext one)
-	 * @param {string} key The skyway.js API key
-	 * @param {string} device The output deviceId to use for playing incoming calls (you should use changeDevice to modify this);
+	 * @param {object} device The settings for the output device
 	 */
-	constructor(audioContext, destination, key, device) {
+	constructor(audioContext, destination, device) {
 		super();
 
 		this.audioContext = audioContext;
 		this.destination = destination;
-		this.key = key;
 		this.device = device;
 
 		// Peer variables
@@ -43,7 +43,7 @@ class WWSUremoteaudio extends WWSUevents {
 
 				this.worklet = new AudioWorkletNode(this.audioContext, "wwsu-meter");
 				this.worklet.port.onmessage = (event) => {
-					let _volume = [0, 0];
+					let _volume = [-1, -1];
 					if (event.data.volume) _volume = event.data.volume;
 					this.emitEvent("audioVolume", [_volume]);
 
@@ -81,7 +81,7 @@ class WWSUremoteaudio extends WWSUevents {
 																// Choppiness was detected in the last second. Emit event peerPLC.
 																if (value > prevPLC) {
 																	this.emitEvent("peerPLC", [
-																		connection,
+																		`${connection}`,
 																		value - prevPLC,
 																	]);
 																}
@@ -112,9 +112,13 @@ class WWSUremoteaudio extends WWSUevents {
 	}
 
 	/**
-	 * Initialize or restart skyway.js peer.
+	 * Initialize the skyway.js peer.
+	 *
+	 * @param {string} peerId The Peer ID to use. Must be what was authenticated via the credential parameter.
+	 * @param {string} apiKey The API Key for the Skyway.js app
+	 * @param {object} credential The authenticated credential object to ensure authorized use of this Skyway.js
 	 */
-	init() {
+	init(peerId, apiKey, credential) {
 		try {
 			this.peer.destroy();
 			this.peer = undefined;
@@ -123,8 +127,9 @@ class WWSUremoteaudio extends WWSUevents {
 		}
 
 		// Inisialize Skyway.js peer
-		this.peer = new Peer({
-			key: this.key,
+		this.peer = new Peer(peerId, {
+			key: apiKey,
+			credential: credential,
 			debug: 3,
 		});
 
@@ -146,29 +151,28 @@ class WWSUremoteaudio extends WWSUevents {
 					this.calling = undefined;
 					// TODO
 				} catch (ee) {}
+			} else {
+				// Other peer errors
+				this.emitEvent("peerError", [err]);
 			}
 		});
 
-		// When the peer gets disconnected, wait 5 seconds before emitting either peerDisconnected or peerDestroyed (to prevent skyway.js flooding)
+		// When the peer gets disconnected, emit either peerDisconnected or peerDestroyed
 		this.peer.on(`disconnected`, () => {
-			setTimeout(() => {
-				if (this.peer && !this.peer.destroyed) {
-					this.emitEvent("peerDisconnected", []);
-				} else {
-					this.emitEvent("peerDestroyed", []);
-				}
-			}, 5000);
+			if (this.peer && !this.peer.destroyed) {
+				this.emitEvent("peerDisconnected", []);
+			} else {
+				this.emitEvent("peerDestroyed", []);
+			}
 		});
 
-		// When the peer is closed, emit peerDestroyed after 5 seconds
+		// When the peer is closed, emit peerDestroyed
 		this.peer.on("close", () => {
 			console.log(`Peer destroyed.`);
 			try {
+				this.emitEvent("peerDestroyed", []);
 				this.peer = undefined;
 			} catch (ee) {}
-			setTimeout(() => {
-				this.emitEvent("peerDestroyed", []);
-			}, 5000);
 		});
 
 		// When the peer receives a request for an incoming call, emit peerCall event so renderers can check if we should answer it
@@ -262,6 +266,9 @@ class WWSUremoteaudio extends WWSUevents {
 		let incomingCall = this.incomingCalls.get(peer);
 		if (!incomingCall) return;
 
+		// Hang the call up if we do not have an output device set
+		if (!this.device) return;
+
 		// Answer the call
 		incomingCall.answer(stream, {
 			audioBandwidth: 128,
@@ -277,7 +284,7 @@ class WWSUremoteaudio extends WWSUevents {
 					"wwsu-meter"
 				);
 				incomingCall.worklet.port.onmessage = (event) => {
-					let _volume = [0, 0];
+					let _volume = [-1, -1];
 					if (event.data.volume) _volume = event.data.volume;
 					this.emitEvent("peerIncomingCallVolume", [peer, _volume]);
 				};
@@ -286,7 +293,10 @@ class WWSUremoteaudio extends WWSUevents {
 			});
 
 		// When a stream is received from the incoming call, connect it
-		incomingCall.on("stream", (stream) => this.onReceiveStream(peer, stream));
+		incomingCall.on("stream", (stream) => {
+			this.onReceiveStream(peer, stream);
+			this.emitEvent("peerCallAnswered", [peer]);
+		});
 
 		// When the incoming call is closed, clean up and emit the peerIncomingCallClosed event
 		incomingCall.on(`close`, () => {
@@ -316,9 +326,10 @@ class WWSUremoteaudio extends WWSUevents {
 		audio.muted = this.muted;
 		audio.srcObject = stream;
 		audio.id = `audio-${peer}`;
+		audio.volume = this.device.volume;
 		document.body.appendChild(audio);
 		audio.load();
-		audio.setSinkId(this.device);
+		audio.setSinkId(this.device.deviceId);
 		audio.oncanplay = function (e) {
 			audio.play();
 		};
@@ -337,9 +348,21 @@ class WWSUremoteaudio extends WWSUevents {
 	 * @param {string} deviceId ID of the output device to use
 	 */
 	changeOutputDevice(deviceId) {
-		this.device = deviceId;
+		this.device.deviceId = deviceId;
 		$("audio").each((index, element) => {
 			element.setSinkId(deviceId);
+		});
+	}
+
+	/**
+	 * Change the audio volume of audio playing
+	 *
+	 * @param {number} volume The gain float
+	 */
+	changeVolume(volume) {
+		this.device.volume = volume;
+		$("audio").each((index, element) => {
+			element.volume = volume;
 		});
 	}
 

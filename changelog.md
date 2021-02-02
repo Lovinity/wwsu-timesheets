@@ -1,5 +1,19 @@
 # WWSU Timesheets Changelog
 
+## 4.0.0-alpha.6
+
+### Changed
+
+- [BREAKING] Updated WWSU Scripts utilizing module manager.
+
+### Added
+
+- Announcements
+
+### Updated
+
+- Packages; adminLTE; Electron to v11
+
 ## 4.0.0-alpha.5 - 2020-11-10
 
 ### Changed

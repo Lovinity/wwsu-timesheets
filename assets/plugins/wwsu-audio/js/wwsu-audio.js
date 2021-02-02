@@ -1,45 +1,35 @@
+'use strict';
+
 /**
  * Manager for audio devices
  */
 class WWSUAudioManager extends WWSUevents {
 	/**
 	 *
-	 * @param {boolean} compressor Whether or not a compressor should be added to the audioContext (such as for remote broadcasts)
+	 * @param {?string} limiter If a limiter should be applied, the path to the audioWorklet module should be specified
 	 */
-	constructor(compressor) {
+	constructor(limiter) {
 		super();
 
 		this.inputs = new Map();
 		this.outputs = new Map();
+		this.volumes = new Map();
 
 		// Create audio context
 		window.AudioContext = window.AudioContext || window.webkitAudioContext;
 		this.audioContext = new AudioContext();
 		this.destination = this.audioContext.createMediaStreamDestination();
 
-		// Create compressor if specified
-		if (compressor) {
-			this.compressor = this.audioContext.createDynamicsCompressor();
-
-			// Set compressor settings
-			this.compressor.threshold.setValueAtTime(
-				-18.0,
-				this.audioContext.currentTime
-			);
-			this.compressor.knee.setValueAtTime(18.0, this.audioContext.currentTime);
-			this.compressor.ratio.setValueAtTime(4.0, this.audioContext.currentTime);
-			this.compressor.attack.setValueAtTime(
-				0.01,
-				this.audioContext.currentTime
-			);
-			this.compressor.release.setValueAtTime(
-				0.05,
-				this.audioContext.currentTime
-			);
-
-			// Connect compressor to audioContext
-			this.compressor.connect(this.destination);
+		// Create limiter if specified
+		if (limiter) {
+			this.audioContext.audioWorklet.addModule(limiter).then(() => {
+				this.worklet = new AudioWorkletNode(this.audioContext, "wwsu-limiter");
+			});
 		}
+
+		this.volumeSend = setInterval(() => {
+			this.emitEvent("audioVolume", [this.volumes]);
+		}, 60);
 
 		// Load available devices
 		this.loadDevices();
@@ -63,6 +53,7 @@ class WWSUAudioManager extends WWSUevents {
 		}
 		this.inputs = new Map();
 		this.outputs = new Map();
+		this.volumes = new Map();
 
 		// Grab available devices
 		navigator.mediaDevices.enumerateDevices().then((devices) => {
@@ -72,10 +63,10 @@ class WWSUAudioManager extends WWSUevents {
 					let wwsuaudio = new WWSUAudioInput(
 						device,
 						this.audioContext,
-						this.compressor || this.destination
+						this.destination
 					);
 					wwsuaudio.on("audioVolume", "WWSUAudioManager", (volume) => {
-						this.emitEvent("audioVolume", [device.deviceId, volume]);
+						this.volumes.set(device.deviceId, volume);
 					});
 
 					this.inputs.set(device.deviceId, wwsuaudio);
